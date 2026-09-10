@@ -14,6 +14,9 @@ Please note the pins on the mini-din connector. I removed pin 2 and 6 to make ro
 
 Also, the dsub 9 connector should be the female variant ofcourse. I used the male footprint+3Dmodel in Kicad.
 
+And the ATTiny2313 footprint might be incorrect. As far as I know The center pad should not be split in 4 quadrants. Still needs reviewing.
+
+
 
 
 ## User manual
