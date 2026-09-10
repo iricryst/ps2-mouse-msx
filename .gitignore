@@ -1,0 +1,8 @@
+# KiCad generated and local files
+.history/
+*.kicad_prl
+*.kicad_pro-bak
+*.kicad_sch-bak
+fp-info-cache
+sym-lib-table
+*.lck
