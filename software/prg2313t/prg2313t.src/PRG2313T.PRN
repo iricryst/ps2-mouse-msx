@@ -1,0 +1,941 @@
+Macro Assembler-80 v2.22D   (c) 1995,1996,1997 MOA  Page 1
+
+
+                                ;================================
+                                ; Программирование ATTiny2313 	!
+                                ;================================
+                                	EXTRN	set_j1,set_j2,res_joy
+                                	EXTRN	set_prg,rd_sgn,wr_fusl
+                                	EXTRN	rd_fuse,rd_mem
+                                	EXTRN	ld_lb,ld_hb,erase
+                                	EXTRN	rd_hex,wr_mem
+                                ;
+  0005                          BDOS	equ	0005h
+  000D                          CR	equ	13
+  000A                          LF	equ	10
+  001A                          EOF	equ	1Ah
+  0080                          COMLIN	equ	0080h
+                                ;
+                                ;===============================================
+                                ;
+                                .z80
+                                ;***********************************************
+  0000'                         	CSEG
+  0000'   C3 04A3'              	jp	start
+                                ;***********************************************
+                                ; Заголовок
+  0003'   50 72 6F 67           header:	db	'Program ATTiny2313 on MSX ver.0.3',CR,LF
+  0007'   72 61 6D 20           
+  000B'   41 54 54 69           
+  000F'   6E 79 32 33           
+  0013'   31 33 20 6F           
+  0017'   6E 20 4D 53           
+  001B'   58 20 76 65           
+  001F'   72 2E 30 2E           
+  0023'   33 0D 0A              
+  0026'   28 63 29 20           	db	'(c) 2009 by caro k2k@list.ru',CR,LF,CR,LF,'$'
+  002A'   32 30 30 39           
+  002E'   20 62 79 20           
+  0032'   63 61 72 6F           
+  0036'   20 6B 32 6B           
+  003A'   40 6C 69 73           
+  003E'   74 2E 72 75           
+  0042'   0D 0A 0D 0A           
+  0046'   24                    
+                                ; Микроконтроллер не подключен ни к одному из портов джойстика
+  0047'   45 72 72 6F           t_ncnct:db	'Error: CHIP is not found',CR,LF
+  004B'   72 3A 20 43           
+  004F'   48 49 50 20           
+  0053'   69 73 20 6E           
+  0057'   6F 74 20 66           
+  005B'   6F 75 6E 64           
+  005F'   0D 0A                 
+  0061'   6F 6E 20 61           	db	'on any joystick port:',CR,LF,CR,LF
+  0065'   6E 79 20 6A           
+  0069'   6F 79 73 74           
+  006D'   69 63 6B 20           
+  0071'   70 6F 72 74           
+  0075'   3A 0D 0A 0D           
+  0079'   0A                    
+Macro Assembler-80 v2.22D   (c) 1995,1996,1997 MOA  Page 1-1
+
+
+                                ; Схема подключения микроконтроллера к разьему джойстика
+  007A'   20 31 20 20           t_sch:	db	' 1  RESET <-: STROBE (Joy-8pin)',CR,LF
+  007E'   52 45 53 45           
+  0082'   54 20 3C 2D           
+  0086'   3A 20 53 54           
+  008A'   52 4F 42 45           
+  008E'   20 28 4A 6F           
+  0092'   79 2D 38 70           
+  0096'   69 6E 29 0D           
+  009A'   0A                    
+  009B'   31 37 20 20           	db	'17  MOSI  <-: TrgA   (Joy-6pin)',CR,LF
+  009F'   4D 4F 53 49           
+  00A3'   20 20 3C 2D           
+  00A7'   3A 20 54 72           
+  00AB'   67 41 20 20           
+  00AF'   20 28 4A 6F           
+  00B3'   79 2D 36 70           
+  00B7'   69 6E 29 0D           
+  00BB'   0A                    
+  00BC'   31 38 20 20           	db	'18  MISO  ->: Up     (Joy-1pin)',CR,LF
+  00C0'   4D 49 53 4F           
+  00C4'   20 20 2D 3E           
+  00C8'   3A 20 55 70           
+  00CC'   20 20 20 20           
+  00D0'   20 28 4A 6F           
+  00D4'   79 2D 31 70           
+  00D8'   69 6E 29 0D           
+  00DC'   0A                    
+  00DD'   31 39 20 20           	db	'19  SCK   <-: TrgB   (Joy-7pin)',CR,LF
+  00E1'   53 43 4B 20           
+  00E5'   20 20 3C 2D           
+  00E9'   3A 20 54 72           
+  00ED'   67 42 20 20           
+  00F1'   20 28 4A 6F           
+  00F5'   79 2D 37 70           
+  00F9'   69 6E 29 0D           
+  00FD'   0A                    
+  00FE'   32 30 20 20           	db	'20  VDD   <-: +5V    (Joy-5pin)',CR,LF
+  0102'   56 44 44 20           
+  0106'   20 20 3C 2D           
+  010A'   3A 20 2B 35           
+  010E'   56 20 20 20           
+  0112'   20 28 4A 6F           
+  0116'   79 2D 35 70           
+  011A'   69 6E 29 0D           
+  011E'   0A                    
+  011F'   31 30 20 20           	db	'10  GND     : GND    (Joy-9pin)',CR,LF,'$',EOF
+  0123'   47 4E 44 20           
+  0127'   20 20 20 20           
+  012B'   3A 20 47 4E           
+  012F'   44 20 20 20           
+  0133'   20 28 4A 6F           
+  0137'   79 2D 39 70           
+  013B'   69 6E 29 0D           
+  013F'   0A 24 1A              
+                                ; Прошивка контроллера без имени
+Macro Assembler-80 v2.22D   (c) 1995,1996,1997 MOA  Page 1-2
+
+
+  0142'   49 6E 66 6F           t_nfnam:db	'Info: Firmware in CHIP has no name',CR,LF,'$'
+  0146'   3A 20 46 69           
+  014A'   72 6D 77 61           
+  014E'   72 65 20 69           
+  0152'   6E 20 43 48           
+  0156'   49 50 20 68           
+  015A'   61 73 20 6E           
+  015E'   6F 20 6E 61           
+  0162'   6D 65 0D 0A           
+  0166'   24                    
+                                ; Новый или стертый микроконтроллер
+  0167'   49 6E 66 6F           t_nprog:db	'Info: New or erased CHIP detected',CR,LF,'$'
+  016B'   3A 20 4E 65           
+  016F'   77 20 6F 72           
+  0173'   20 65 72 61           
+  0177'   73 65 64 20           
+  017B'   43 48 49 50           
+  017F'   20 64 65 74           
+  0183'   65 63 74 65           
+  0187'   64 0D 0A 24           
+                                ; Ошибка параметра программы (не допустимое имя файла)
+  018B'   45 72 72 6F           t_ename:db	'Error: Illegal filename',CR,LF,'$'
+  018F'   72 3A 20 49           
+  0193'   6C 6C 65 67           
+  0197'   61 6C 20 66           
+  019B'   69 6C 65 6E           
+  019F'   61 6D 65 0D           
+  01A3'   0A 24                 
+                                ; Не корректная версия DOS
+  01A5'   45 72 72 6F           t_eos:	db	'Error: wrong DOS version',CR,LF,'$'
+  01A9'   72 3A 20 77           
+  01AD'   72 6F 6E 67           
+  01B1'   20 44 4F 53           
+  01B5'   20 76 65 72           
+  01B9'   73 69 6F 6E           
+  01BD'   0D 0A 24              
+                                ; Ошибка открытия файла
+  01C0'   45 72 72 6F           t_efile:db	'Error: cannot open file',CR,LF,'$'
+  01C4'   72 3A 20 63           
+  01C8'   61 6E 6E 6F           
+  01CC'   74 20 6F 70           
+  01D0'   65 6E 20 66           
+  01D4'   69 6C 65 0D           
+  01D8'   0A 24                 
+                                ; Подключение к порту N
+  01DA'   43 6F 6E 6E           t_cnct:	db	'Connecting to port No.'
+  01DE'   65 63 74 69           
+  01E2'   6E 67 20 74           
+  01E6'   6F 20 70 6F           
+  01EA'   72 74 20 4E           
+  01EE'   6F 2E                 
+  01F0'   31 0D 0A              port_n:	db	'1',CR,LF
+                                ; Сигнатура
+  01F3'   53 69 67 6E           	db	'Sign. : $'
+  01F7'   2E 20 3A 20           
+  01FB'   24                    
+Macro Assembler-80 v2.22D   (c) 1995,1996,1997 MOA  Page 1-3
+
+
+                                ; Тип подключенной микросхемы
+  01FC'   20 2D 3E 20           t_t2313:db	' -> ATMEL ATTiny2313',CR,LF,'$'
+  0200'   41 54 4D 45           
+  0204'   4C 20 41 54           
+  0208'   54 69 6E 79           
+  020C'   32 33 31 33           
+  0210'   0D 0A 24              
+                                ; Неизвестный тип микроконтроллера
+  0213'   20 2D 3E 20           t_esign:db	' -> Unknown CHIP',CR,LF,'$'
+  0217'   55 6E 6B 6E           
+  021B'   6F 77 6E 20           
+  021F'   43 48 49 50           
+  0223'   0D 0A 24              
+                                ; FUSES
+  0226'   46 55 53 45           t_fuse:	db	'FUSES : $'
+  022A'   53 20 3A 20           
+  022E'   24                    
+                                ; Запись нового значения FUSES
+  022F'   57 72 69 74           t_nfuse:db	'Writing new FUSES',CR,LF,'$'
+  0233'   69 6E 67 20           
+  0237'   6E 65 77 20           
+  023B'   46 55 53 45           
+  023F'   53 0D 0A 24           
+                                ; Ошибка записи FUSES
+  0243'   45 72 72 6F           t_efus:	db	'Error: cannot set FUSES',CR,LF,'$'
+  0247'   72 3A 20 63           
+  024B'   61 6E 6E 6F           
+  024F'   74 20 73 65           
+  0253'   74 20 46 55           
+  0257'   53 45 53 0D           
+  025B'   0A 24                 
+                                ; HEX-файл не задан (параметр программы отсутствует)
+  025D'   45 72 72 6F           t_exit:	db	'Error: Firmware HEX-file is omitted',CR,LF,CR,LF
+  0261'   72 3A 20 46           
+  0265'   69 72 6D 77           
+  0269'   61 72 65 20           
+  026D'   48 45 58 2D           
+  0271'   66 69 6C 65           
+  0275'   20 69 73 20           
+  0279'   6F 6D 69 74           
+  027D'   74 65 64 0D           
+  0281'   0A 0D 0A              
+  0284'   53 79 6E 6F           	db	'Synopsis:',CR,LF
+  0288'   70 73 69 73           
+  028C'   3A 0D 0A              
+  028F'   70 72 67 32           	db	'prg2313t [firmware HEX-file]',CR,LF,'$'
+  0293'   33 31 33 74           
+  0297'   20 5B 66 69           
+  029B'   72 6D 77 61           
+  029F'   72 65 20 48           
+  02A3'   45 58 2D 66           
+  02A7'   69 6C 65 5D           
+  02AB'   0D 0A 24              
+                                ; Чтение текущей прошивки микоконтроллера
+  02AE'   0D 0A 52 65           t_read:	db	CR,LF,'Reading firmware from CHIP... $'
+  02B2'   61 64 69 6E           
+Macro Assembler-80 v2.22D   (c) 1995,1996,1997 MOA  Page 1-4
+
+
+  02B6'   67 20 66 69           
+  02BA'   72 6D 77 61           
+  02BE'   72 65 20 66           
+  02C2'   72 6F 6D 20           
+  02C6'   43 48 49 50           
+  02CA'   2E 2E 2E 20           
+  02CE'   24                    
+                                ; Чтение прошивки из файла
+  02CF'   52 65 61 64           t_fread:db	'Reading firmware from FILE... $'
+  02D3'   69 6E 67 20           
+  02D7'   66 69 72 6D           
+  02DB'   77 61 72 65           
+  02DF'   20 66 72 6F           
+  02E3'   6D 20 46 49           
+  02E7'   4C 45 2E 2E           
+  02EB'   2E 20 24              
+                                ; Очистка памяти микроконтроллера
+  02EE'   45 72 61 73           t_erase:db	'Erasing CHIP... $'
+  02F2'   69 6E 67 20           
+  02F6'   43 48 49 50           
+  02FA'   2E 2E 2E 20           
+  02FE'   24                    
+                                ; Прошивки совпадают, переписывать нет необходимости
+  02FF'   43 48 49 50           t_comp:	db	'CHIP & FILE contain the same firmware,',CR,LF
+  0303'   20 26 20 46           
+  0307'   49 4C 45 20           
+  030B'   63 6F 6E 74           
+  030F'   61 69 6E 20           
+  0313'   74 68 65 20           
+  0317'   73 61 6D 65           
+  031B'   20 66 69 72           
+  031F'   6D 77 61 72           
+  0323'   65 2C 0D 0A           
+  0327'   20 6E 6F 20           	db	' no need to re-write',CR,LF,'$'
+  032B'   6E 65 65 64           
+  032F'   20 74 6F 20           
+  0333'   72 65 2D 77           
+  0337'   72 69 74 65           
+  033B'   0D 0A 24              
+                                ; Ошибка формата HEX-файла
+  033E'   0D 0A 45 72           t_ehex:	db	CR,LF,'Error: invalid format of HEX-file',CR,LF,'$'
+  0342'   72 6F 72 3A           
+  0346'   20 69 6E 76           
+  034A'   61 6C 69 64           
+  034E'   20 66 6F 72           
+  0352'   6D 61 74 20           
+  0356'   6F 66 20 48           
+  035A'   45 58 2D 66           
+  035E'   69 6C 65 0D           
+  0362'   0A 24                 
+                                ; Имя новой прошивки
+  0364'   49 6E 66 6F           t_nfwnm:db	'Info: New firmware name:',CR,LF,'$'
+  0368'   3A 20 4E 65           
+  036C'   77 20 66 69           
+  0370'   72 6D 77 61           
+  0374'   72 65 20 6E           
+Macro Assembler-80 v2.22D   (c) 1995,1996,1997 MOA  Page 1-5
+
+
+  0378'   61 6D 65 3A           
+  037C'   0D 0A 24              
+                                ; Имя текущей прошивки
+  037F'   49 6E 66 6F           t_cfwnm:db	'Info: Current firmware name:',CR,LF,'$'
+  0383'   3A 20 43 75           
+  0387'   72 72 65 6E           
+  038B'   74 20 66 69           
+  038F'   72 6D 77 61           
+  0393'   72 65 20 6E           
+  0397'   61 6D 65 3A           
+  039B'   0D 0A 24              
+                                ; Программирование микроконтроллера:
+  039E'   50 72 6F 67           t_prog:	db	'Programming CHIP... $'
+  03A2'   72 61 6D 6D           
+  03A6'   69 6E 67 20           
+  03AA'   43 48 49 50           
+  03AE'   2E 2E 2E 20           
+  03B2'   24                    
+                                ; Верификация
+  03B3'   56 65 72 69           t_verif:db	'Verification... $'
+  03B7'   66 69 63 61           
+  03BB'   74 69 6F 6E           
+  03BF'   2E 2E 2E 20           
+  03C3'   24                    
+                                ; Норма
+  03C4'   4F 4B 0D 0A           t_OK:	db	'OK',CR,LF,'$'
+  03C8'   24                    
+                                ; Ошибка
+  03C9'   45 72 72 6F           t_err:	db	'Error',CR,LF,'$'
+  03CD'   72 0D 0A 24           
+                                ; Режим тактирования микроконтроллера
+  03D1'   20 2D 3E 20           t_clkex:db      ' -> Ext. Clock',CR,LF,'$'
+  03D5'   45 78 74 2E           
+  03D9'   20 43 6C 6F           
+  03DD'   63 6B 0D 0A           
+  03E1'   24                    
+  03E2'   20 2D 3E 20           t_clk05:db	' -> Int. Clk = 0.5 MHz',CR,LF,'$'
+  03E6'   49 6E 74 2E           
+  03EA'   20 43 6C 6B           
+  03EE'   20 3D 20 30           
+  03F2'   2E 35 20 4D           
+  03F6'   48 7A 0D 0A           
+  03FA'   24                    
+  03FB'   20 2D 3E 20           t_clk_1:db	' -> Int. Clk = 1 MHz',CR,LF,'$'
+  03FF'   49 6E 74 2E           
+  0403'   20 43 6C 6B           
+  0407'   20 3D 20 31           
+  040B'   20 4D 48 7A           
+  040F'   0D 0A 24              
+  0412'   20 2D 3E 20           t_clk_4:db	' -> Int. Clk = 4 MHz',CR,LF,'$'
+  0416'   49 6E 74 2E           
+  041A'   20 43 6C 6B           
+  041E'   20 3D 20 34           
+  0422'   20 4D 48 7A           
+  0426'   0D 0A 24              
+  0429'   20 2D 3E 20           t_clk_8:db	' -> Int. Clk = 8 MHz',CR,LF,'$'
+Macro Assembler-80 v2.22D   (c) 1995,1996,1997 MOA  Page 1-6
+
+
+  042D'   49 6E 74 2E           
+  0431'   20 43 6C 6B           
+  0435'   20 3D 20 38           
+  0439'   20 4D 48 7A           
+  043D'   0D 0A 24              
+  0440'   20 2D 3E 20           t_clkwo:db	' -> Wdog Clk = 128 kHz',CR,LF,'$'
+  0444'   57 64 6F 67           
+  0448'   20 43 6C 6B           
+  044C'   20 3D 20 31           
+  0450'   32 38 20 6B           
+  0454'   48 7A 0D 0A           
+  0458'   24                    
+  0459'   20 2D 3E 20           t_clker:db	' -> Ext. Resonator',CR,LF,'$'
+  045D'   45 78 74 2E           
+  0461'   20 52 65 73           
+  0465'   6F 6E 61 74           
+  0469'   6F 72 0D 0A           
+  046D'   24                    
+  046E'   20 2D 3E 20           t_clkre:db	' -> Reserved FUSES',CR,LF,'$'
+  0472'   52 65 73 65           
+  0476'   72 76 65 64           
+  047A'   20 46 55 53           
+  047E'   45 53 0D 0A           
+  0482'   24                    
+                                ;================================================
+                                ;CLKDIV8=1 -> CLK=CLK
+  0483'   03D1'                 tab_clk:dw	t_clkex	;0 ' -> Ext. Clock'
+  0485'   046E'                 	dw	t_clkre	;1 ' -> Reserved FUSES'
+  0487'   0412'                 	dw	t_clk_4	;2 ' -> Int. Clk = 4 MHz'
+  0489'   046E'                 	dw	t_clkre	;3 ' -> Reserved FUSES'
+  048B'   0429'                 	dw	t_clk_8	;4 ' -> Int. Clk = 8 MHz'
+  048D'   046E'                 	dw	t_clkre	;5 ' -> Reserved FUSES'
+  048F'   0440'                 	dw	t_clkwo	;6 ' -> Wdog Clk = 128 kHz'
+  0491'   046E'                 	dw	t_clkre	;7 ' -> Reserved FUSES'
+                                ;CLKDIV8=0 -> CLK=CLK/8
+  0493'   03D1'                 tab_cl8:dw	t_clkex	;0 ' -> Ext. Clock'
+  0495'   046E'                 	dw	t_clkre	;1 ' -> Reserved FUSES'
+  0497'   03E2'                 	dw	t_clk05	;2 ' -> Int. Clk = 0.5 MHz'
+  0499'   046E'                 	dw	t_clkre	;3 ' -> Reserved FUSES'
+  049B'   03FB'                 	dw	t_clk_1	;4 ' -> Int. Clk = 1 MHz'
+  049D'   046E'                 	dw	t_clkre	;5 ' -> Reserved FUSES'
+  049F'   0440'                 	dw	t_clkwo	;6 ' -> Wdog Clk = 128 kHz'
+  04A1'   046E'                 	dw	t_clkre	;7 ' -> Reserved FUSES'
+                                ;*****************************************************
+  04A3'   11 0003'              Start:	ld	de,header	;заголовок программы
+  04A6'   0E 09                 	ld	c,9		;print message
+  04A8'   CD 0005               	call	bdos
+                                ;
+                                ;==================================================
+                                ; проверить подключение контроллера
+  04AB'   CD 0000*              	call	set_j1		;Задать Джойстик 1
+                                ; прочитать сигнатуру МК
+  04AE'   CD 0000*              	call	set_prg		;Задать режим программирования МК
+  04B1'   28 22                 	jr	z,ini_ok	;подключен к порту 1
+                                ; проверить второй порт
+  04B3'   CD 0000*              	call	res_joy		;вернуть назад
+Macro Assembler-80 v2.22D   (c) 1995,1996,1997 MOA  Page 1-7
+
+
+  04B6'   3E 32                 	ld	a,'2'
+  04B8'   32 01F0'              	ld	(port_n),a	;номер порта джойстика
+  04BB'   CD 0000*              	call	set_j2		;Задать Джойстик 2
+  04BE'   CD 0000*              	call	set_prg		;Задать режим программирования МК
+  04C1'   28 12                 	jr	z,ini_ok	;подключен к порту 2
+  04C3'   FB                    	ei
+                                ; Не обнаружено подключение МК к MSX
+  04C4'   11 0047'              e_set:	ld	de,t_ncnct	;'CHIP not connect to MSX:'
+  04C7'   18 03                 	jr	e_exit
+  04C9'   11 0213'              e_sign:	ld	de,t_esign	;' -> Not a known type'
+  04CC'   0E 09                 e_exit:	ld	c,9
+  04CE'   CD 0005               	call	bdos
+  04D1'   CD 0000*              	call	res_joy
+  04D4'   C7                    	rst	0
+                                ;====================================
+                                ; МК подключен к одному из портов джойстика
+  04D5'   FB                    ini_ok:	ei
+                                ; Напечатать имя порта, куда подключен МК
+  04D6'   11 01DA'                      ld	de,t_cnct	;'Connect to port 1|2'
+  04D9'   0E 09                 	ld	c,9
+  04DB'   CD 0005               	call	bdos
+                                ; Прочитать сигнатуру
+  04DE'   CD 0000*              	call	set_prg
+  04E1'   20 E1                 	jr	nz,e_set
+  04E3'   CD 0000*              	call	rd_sgn		;прочитать сигнатуру МК
+                                ;   D,  E,  C = 3 байта сигнатуры
+                                ; 0Ah,91h,1Eh -> ATTiny2313
+  04E6'   FB                    	ei
+  04E7'   D5                    	push	de
+  04E8'   C5                    	push	bc
+  04E9'   CD 072D'              	call	prn_dec		; напечатать сигнатуру
+  04EC'   C1                    	pop	bc
+  04ED'   D1                    	pop	de
+                                ; сравнить сигнатуру с шаблоном
+  04EE'   7A                    	ld	a,d
+  04EF'   FE 0A                 	cp	0ah
+  04F1'   20 D6                 	jr	nz,e_sign	;Ошибка типа МК
+  04F3'   7B                    	ld	a,e
+  04F4'   FE 91                 	cp	91h
+  04F6'   20 D1                 	jr	nz,e_sign       ;
+  04F8'   79                    	ld	a,c
+  04F9'   FE 1E                 	cp	1eh
+  04FB'   20 CC                 	jr	nz,e_sign	;
+                                ; Сигнатура совпала
+  04FD'   11 01FC'              	ld	de,t_t2313	;' -> ATTiny2313'
+  0500'   0E 09                 	ld	c,9
+  0502'   CD 0005               	call	bdos 	
+                                ;------
+                                ; прочитать FUSES
+  0505'   3E 01                 	ld	a,1
+  0507'   32 0566'              rd_fus:	ld	(c_fus),a	;счетчик записи FUSES
+  050A'   11 0226'              	ld	de,t_fuse	;'FUSES: '
+  050D'   0E 09                 	ld	c,9
+  050F'   CD 0005               	call	bdos
+                                ;
+  0512'   CD 0000*              	call	set_prg
+Macro Assembler-80 v2.22D   (c) 1995,1996,1997 MOA  Page 1-8
+
+
+  0515'   20 AD                 	jr	nz,e_set
+  0517'   CD 0000*              	call	rd_fuse		;прочитать FUSES
+                                ;   D,  E,  C = 3 байта FUSES  (E4 DF FF)
+  051A'   FB                    	ei
+  051B'   CD 072D'              	call	prn_dec		;напечатать FUSES
+  051E'   D5                    	push	de
+                                ; Определить частоту по FUSES
+                                ;--------------------------------------------
+                                ; LOW BYTE             DEF     SET
+                                ;--------------------------------------------
+                                ; 7 - CLKDIV8           0       1
+                                ; 6 - CKOUT             1       1
+                                ; 5 - SUT1              1       1
+                                ; 4 - SUT0              0       0
+                                ; 3 - CKSEL3   		0       0
+                                ; 2 - CKSEL2            1       1
+                                ; 1 - CKSEL1            0       0
+                                ; 0 - CKSEL0            0       0
+                                ;--------------------------------------------
+  051F'   7A                    	ld	a,d		;FUSE LOW
+  0520'   11 0459'              	ld	de,t_clker	;'External Oscillator'
+  0523'   CB 5F                 	bit	3,a		;CLKSEL3=1 ?
+  0525'   20 14                 	jr	nz,clk_osc	; да
+                                ; CLKSEL3=0
+  0527'   01 0493'              	ld	bc,tab_cl8
+  052A'   CB 7F                 	bit	7,a		;CLKDIV8 ?
+  052C'   28 03                 	jr	z,div8_on	;если 0, CLK/8
+                                ; div8=1 CLK=CLK
+  052E'   01 0483'              	ld	bc,tab_clk
+  0531'   E6 07                 div8_on:and	007h		;CLKSEL2..0 ?
+  0533'   6F                    	ld	l,a
+  0534'   26 00                 	ld	h,0
+  0536'   29                    	add	hl,hl		;*2
+  0537'   09                    	add	hl,bc		;
+  0538'   5E                    	ld	e,(hl)
+  0539'   23                    	inc	hl
+  053A'   56                    	ld	d,(hl)		;de=адрес сообщения
+  053B'   0E 09                 clk_osc:ld	c,9
+  053D'   CD 0005               	call	bdos		;Печать частоты
+                                ; сравнить FUSE с требуемым шаблоном
+  0540'   D1                    	pop	de
+  0541'   7A                    	ld	a,d
+  0542'   FE E4                 	cp	0e4h		;DIV8=1,CLK=8Mhz
+  0544'   28 21                 	jr	z,ok_fuse
+                                ; Ecли FUSES не соответствует заданным
+  0546'   11 022F'              	ld	de,t_nfuse	;'Write new FUSES'
+  0549'   0E 09                 	ld	c,9
+  054B'   CD 0005               	call	bdos
+                                ; Записать
+  054E'   CD 0000*              	call	set_prg
+  0551'   C2 04C4'              	jp	nz,e_set	;ошибка инициализации
+                                ;
+  0554'   1E E4                 	ld	e,0e4h
+  0556'   CD 0000*              	call	wr_fusl		;записать новый FUSES
+  0559'   FB                    	ei
+  055A'   3A 0566'              	ld	a,(c_fus)
+Macro Assembler-80 v2.22D   (c) 1995,1996,1997 MOA  Page 1-9
+
+
+  055D'   3D                    	dec	a
+  055E'   28 A7                 	jr	z,rd_fus	;снова прочитать FUSES
+                                ; Ошибка записи FUSES
+  0560'   11 0243'              	ld	de,t_efus	;'Error set FUSES'
+  0563'   C3 04CC'              	jp	e_exit
+  0566'   00                    c_fus:	db	0		;счетчик записи FUSES
+                                ;-------
+  0567'                         ok_fuse:
+                                ; Прочитать в буфер прошивку контроллера
+  0567'   11 02AE'              	ld	de,t_read	;'Read firmware from CHIP... '
+  056A'   0E 09                 	ld	c,9
+  056C'   CD 0005               	call	bdos
+                                ; Читаем текущую прошивку в буфер
+  056F'   CD 069F'              	call	rd_chip		;Читаем
+  0572'   C2 04C4'              	jp	nz,e_set	;ошибка инициализации
+  0575'   FB                    	ei
+  0576'   DD 36 00 24           	ld	(ix+0),'$'	;конец текста в буфер
+                                ;
+  057A'   11 03C4'              	ld	de,t_OK		;OK
+  057D'   0E 09                 	ld	c,9
+  057F'   CD 0005               	call	bdos
+                                ; проверить, запрограммирован ли МК
+  0582'   3A 0045"              	ld	a,(buf_mk)	;Первый байт в чипе ?
+  0585'   3C                    	inc	a		; если = 0FFh
+  0586'   11 0167'              	ld	de,t_nprog	;'Clearing MK'
+  0589'   28 14                 	jr	z,no_prog
+                                ;
+  058B'   11 037F'              	ld	de,t_cfwnm	;'Current firmware name:'
+  058E'   0E 09                 	ld	c,9
+  0590'   CD 0005               	call	bdos
+                                ; проверить есть ли текст в конце прошивки
+  0593'   3A 0825"              	ld	a,(buf_mk+2048-32)
+  0596'   3C                    	inc	a
+  0597'   11 0142'              	ld	de,t_nfnam	;'No name firmware'
+  059A'   28 03                 	jr	z,no_prog	;
+                                ; Напечатать имя прошивки
+  059C'   11 0825"              	ld	de,buf_mk+2048-32
+  059F'   0E 09                 no_prog:ld	c,9
+  05A1'   CD 0005               	call	bdos
+  05A4'   CD 073E'              	call	prn_crlf
+                                ;
+  05A7'   CD 0000*              	call	_STDOS##
+  05AA'   11 01A5'              	ld	de,t_eos	;'Error OC'
+  05AD'   C2 04CC'              	jp	nz,e_exit	;выход с ошибкой 1
+                                ;
+  05B0'   3A 0080               	ld	a,(COMLIN)	;
+  05B3'   B7                    	or	a
+  05B4'   01 FFFF               	ld	bc,0ffffh	;
+  05B7'   28 1D                 	jr	z,no_file	;не задано имя файла
+                                ; Параметр вызова - имя HEX-файла для записи в МК
+  05B9'   21 0081               	ld	hl,COMLIN + 1
+  05BC'   11 0000"              	ld	de,FileObject
+  05BF'   CD 0000*              	call	_STSTR##
+  05C2'   11 018B'              	ld	de,t_ename	;'Error parametr'
+  05C5'   CA 04CC'              	jp	z,e_exit	;выход с ошибкой 2
+                                ; Открыть файл для чтения
+Macro Assembler-80 v2.22D   (c) 1995,1996,1997 MOA  Page 1-10
+
+
+  05C8'   11 0000"              	ld	de,FileObject
+  05CB'   06 00                 	ld	b,0
+  05CD'   CD 0000*              	call	_OPEN##
+  05D0'   11 01C0'              	ld	de,t_efile	;'Error open file'
+  05D3'   C2 04CC'              	jp	nz,e_exit	;выход с ошибкой 3
+                                ; Файл найден
+  05D6'   ED 43 0043"           no_file:ld	(FileHandle),bc	;
+                                ; если задано имя файла прошивки, прочитать его в буфер
+  05DA'   2A 0043"              	ld	hl,(FileHandle)
+  05DD'   7D                    	ld	a,l
+  05DE'   A4                    	and	h
+  05DF'   3C                    	inc	a
+  05E0'   11 025D'              	ld	de,t_exit	;'HEX-file is not given'
+  05E3'   CA 04CC'              	jp	z,e_exit	;имя не задано
+                                ;=============================================
+  05E6'   11 02CF'              	ld	de,t_fread	;'Read firmware from FILE:... '
+  05E9'   0E 09                 	ld	c,9
+  05EB'   CD 0005               	call	bdos
+                                ; буфер файла заполняем кодом 0ffh
+  05EE'   21 0847"              	ld	hl,buf_fl
+  05F1'   11 0848"              	ld	de,buf_fl+1
+  05F4'   01 07FF               	ld	bc,2048-1
+  05F7'   36 FF                 	ld	(hl),0ffh	;
+  05F9'   ED B0                 	ldir
+                                ; читаем HEX-файл
+  05FB'   11 0847"              	ld	de,buf_fl	;адрес буфера чтения
+  05FE'   ED 4B 0043"           	ld	bc,(FileHandle)	;дескриптор файла
+  0602'   CD 0000*              	call	rd_hex		;Прочитать HEX-файл
+  0605'   11 033E'              	ld	de,t_ehex	;'Error of format HEX-file'
+  0608'   DA 04CC'              	jp	c,e_exit	; ВЫХОД с ошибкой
+                                ;
+  060B'   11 03C4'              	ld	de,t_OK		;OK
+  060E'   0E 09                 	ld	c,9
+  0610'   CD 0005               	call	bdos
+                                ;
+  0613'   11 0364'              	ld	de,t_nfwnm	;'File firmware name:'
+  0616'   0E 09                 	ld	c,9
+  0618'   CD 0005               	call	bdos
+                                ; напечатать имя новой прошивки если задано
+  061B'   3A 1027"              	ld	a,(buf_fl+2048-32)
+  061E'   3C                    	inc	a
+  061F'   11 0142'              	ld	de,t_nfnam	;текст без имени
+  0622'   28 08                 	jr	z,no_name
+                                ;
+  0624'   3E 24                 	ld	a,'$'		;флаг конца текста
+  0626'   32 1047"              	ld	(buf_fl+2048),a
+  0629'   11 1027"              	ld	de,buf_fl+2048-32
+  062C'   0E 09                 no_name:ld	c,9
+  062E'   CD 0005               	call	bdos
+  0631'   CD 073E'              	call	prn_crlf
+                                ; сравнить буфера текущей прошивки и файла
+  0634'   CD 0700'              	call	cmp_fw		;СРАВНЕНИЕ
+  0637'   20 06                 	jr	nz,no_cp	;если Z=0, не совпадают
+                                ; обе прошивки совпадают, незачем переписывать
+  0639'   11 02FF'              	ld	de,t_comp	;'The Firmware match'
+  063C'   C3 04CC'              	jp	e_exit		; ВЫХОД
+Macro Assembler-80 v2.22D   (c) 1995,1996,1997 MOA  Page 1-11
+
+
+                                ;======================================
+                                ; прошивки отличаются, значит переписать
+  063F'                         no_cp:
+                                ; стереть память МК если надо
+                                ; для этого проверить что МК чист
+  063F'   21 0045"              	ld	hl,buf_mk	;
+  0642'   01 0800               	ld	bc,2048		;
+  0645'   7E                    cc_mem:	ld	a,(hl)
+  0646'   3C                    	inc	a
+  0647'   20 08                 	jr	nz,no_clear
+  0649'   23                    	inc	hl
+  064A'   0B                    	dec	bc
+  064B'   79                    	ld	a,c
+  064C'   B0                    	or	b
+  064D'   20 F6                 	jr	nz,cc_mem
+  064F'   18 1A                 	jr	yes_clear
+  0651'                         no_clear:
+  0651'   11 02EE'              	ld	de,t_erase	;'Erase CHIP...'
+  0654'   0E 09                 	ld	c,9
+  0656'   CD 0005               	call	bdos
+                                ;
+  0659'   CD 0000*              	call	set_prg		;Задать режим программирования МК
+  065C'   C2 04C4'              	jp	nz,e_set	;
+                                ;
+  065F'   CD 0000*              	call	erase		;очистить МК
+  0662'   FB                    	ei
+  0663'   11 03C4'              	ld	de,t_ok		;'OK'
+  0666'   0E 09                 	ld	c,9
+  0668'   CD 0005               	call	bdos
+  066B'                         yes_clear:
+                                ; записать в МК новую прошивку
+  066B'   11 039E'              	ld	de,t_prog	;'Programm CHIP:... '
+  066E'   0E 09                 	ld	c,9
+  0670'   CD 0005               	call	bdos
+                                ;
+  0673'   CD 06C3'              	call	wr_chip		;Пишем
+  0676'   C2 04C4'              	jp	nz,e_set
+                                ; Записалось
+  0679'   11 03C4'              	ld	de,t_ok		;'OK'
+  067C'   0E 09                 	ld	c,9
+  067E'   CD 0005               	call	bdos
+                                ; проверить что залилось нормально
+                                ; читаем прошивку снова
+  0681'   FB                    	ei
+  0682'   11 03B3'              	ld	de,t_verif	;'Verification:'
+  0685'   0E 09                 	ld	c,9
+  0687'   CD 0005               	call	bdos
+                                ; Прочитать в буфер прошивку контроллера
+  068A'   CD 069F'              	call	rd_chip		;читать в буфер
+  068D'   C2 04C4'              	jp	nz,e_set	; выход с ошибкой
+  0690'   FB                    	ei
+  0691'   CD 0700'              	call	cmp_fw		;Сравнить прошивки
+  0694'   11 03C9'              	ld	de,t_err
+  0697'   20 03                 	jr	nz,err_fw	;не совпадение
+                                ; прошивки полностью совпадают
+  0699'   11 03C4'              	ld	de,t_ok		;
+Macro Assembler-80 v2.22D   (c) 1995,1996,1997 MOA  Page 1-12
+
+
+  069C'   C3 04CC'              err_fw:	jp	e_exit		;ВЫХОД
+                                ;***** КОНЕЦ ПРОГРАММЫ ************************
+                                ;==============================================
+                                ;===== ПРОЦЕДУРЫ ==============================
+                                ;==============================================
+                                ; Читать прошивку в буфер
+  069F'   CD 0000*              rd_chip:call	set_prg		;Задать режим программирования МК
+  06A2'   C0                    	ret	nz		; выход с ошибкой
+                                ; Цикл чтения памяти
+  06A3'   21 0000               	ld	hl,0h		;с адреса в МК
+  06A6'   01 0400               	ld	bc,2048/2	;весь обьем памяти 2 кб
+  06A9'   DD 21 0045"           	ld	ix,buf_mk	;записывать в буфер
+                                ;/-------------------------------
+  06AD'   C5                    crd_mem:push	bc
+  06AE'   CD 0000*              	call	rd_mem		;de=(hl)
+  06B1'   23                    	inc	hl
+  06B2'   DD 73 00              	ld	(ix+0),e
+  06B5'   DD 72 01              	ld	(ix+1),d
+  06B8'   DD 23                 	inc	ix
+  06BA'   DD 23                 	inc	ix
+  06BC'   C1                    	pop	bc
+  06BD'   0B                    	dec	bc
+  06BE'   79                    	ld	a,c
+  06BF'   B0                    	or	b
+  06C0'   20 EB                 	jr	nz,crd_mem
+                                ;\-------------------------------
+  06C2'   C9                    	ret			;выход OK Z=1
+                                ;==============================================
+                                ; Записать прошивку из буфера
+  06C3'   CD 0000*              wr_chip:call	set_prg		;Задать режим программирования МК
+  06C6'   C0                    	ret	nz		; Выход с ошибкой
+                                ;
+  06C7'   21 0000               	ld	hl,0h		;с адреса в МК
+  06CA'   01 0400               	ld	bc,2048/2	;весь обьем памяти 2048 байт
+  06CD'   DD 21 0847"           	ld	ix,buf_fl	;записывать из буфера
+                                ;/-------------------------------
+  06D1'   DD 7E 00              cl_mem:	ld	a,(ix+0)	;
+  06D4'   DD A6 01              	and	(ix+1)
+  06D7'   3C                    	inc	a		;если оба байта = 0ffh,
+  06D8'   28 0E                 	jr	z,no_prg	;не надо программировать
+  06DA'   C5                    	push	bc
+  06DB'   DD 5E 00              	ld	e,(ix+0)
+  06DE'   CD 0000*              	call	ld_lb		;загрузить мл.байт
+  06E1'   DD 5E 01              	ld	e,(ix+1)
+  06E4'   CD 0000*              	call	ld_hb		;загрузить ст.байт
+  06E7'   C1                    	pop	bc
+  06E8'   DD 23                 no_prg:	inc	ix
+  06EA'   DD 23                 	inc	ix
+  06EC'   23                    	inc	hl
+  06ED'   7D                    	ld	a,l
+  06EE'   E6 0F                 	and	0fh		;от 0xx0 до 0xxFh
+  06F0'   20 DF                 	jr	nz,cl_mem	;догрузить страницу
+                                ; запрограммировать страницу
+  06F2'   2B                    	dec	hl		;
+  06F3'   C5                    	push	bc
+  06F4'   CD 0000*              	call	wr_mem		;записать страницу 32 байта
+Macro Assembler-80 v2.22D   (c) 1995,1996,1997 MOA  Page 1-13
+
+
+  06F7'   C1                    	pop	bc
+  06F8'   23                    	inc	hl
+  06F9'   7C                    	ld	a,h
+  06FA'   E6 FC                 	and	0fch		;до 3ffh
+  06FC'   28 D3                 	jr	z,cl_mem
+                                ;\-------------------------------
+  06FE'   AF                    	xor	a		;Z=1
+  06FF'   C9                    	ret			; Выход OK
+                                ;=============================================
+                                ; сравнить прошивки
+  0700'   21 0045"              cmp_fw:	ld	hl,buf_mk
+  0703'   11 0847"              	ld	de,buf_fl
+  0706'   01 0800               	ld	bc,2048
+  0709'   1A                    cp_cikl:ld	a,(de)
+  070A'   BE                    	cp	(hl)
+  070B'   C0                    	ret	nz		;нет совпадения
+  070C'   23                    	inc	hl
+  070D'   13                    	inc	de
+  070E'   0B                    	dec	bc
+  070F'   79                    	ld	a,c
+  0710'   B0                    	or	b
+  0711'   20 F6                 	jr	nz,cp_cikl
+  0713'   C9                    	ret			;есть совпадение
+                                ;==============================================
+                                ; Печать текста
+                                ;==============================================
+                                ; Печать дампа памяти
+                                ; HL - адрес
+                                ; DE - длина
+  0714'                         prn_dmp:
+  0714'   CD 073E'              b_dump:	call	prn_crlf
+  0717'   06 08                 	ld	b,8
+  0719'   CD 0756'              	call	prn_hl		;адрес
+  071C'   CD 0747'              c_dump:	call	prn_sp
+  071F'   7E                    	ld	a,(hl)
+  0720'   CD 075B'              	call	prn_hex
+  0723'   23                    	inc	hl
+  0724'   1B                    	dec	de
+  0725'   7B                    	ld	a,e
+  0726'   B2                    	or	d
+  0727'   28 15                 	jr	z,prn_crlf	;exit
+  0729'   10 F1                 	djnz	c_dump
+  072B'   18 E7                 	jr	b_dump
+                                ;-----------------------------------
+                                ; Напечатать коды D,E,C в виде: XX XX XX
+  072D'   7A                    prn_dec:ld	a,d
+  072E'   CD 075B'              	call	prn_hex
+  0731'   CD 0747'              	call	prn_sp
+  0734'   7B                    	ld	a,e
+  0735'   CD 075B'              	call	prn_hex
+  0738'   CD 0747'              	call	prn_sp
+  073B'   79                    	ld	a,c
+  073C'   18 1D                 	jr	prn_hex
+                                ;-----------------------------------
+                                ; переход на новую строку
+  073E'                         prn_crlf:
+Macro Assembler-80 v2.22D   (c) 1995,1996,1997 MOA  Page 1-14
+
+
+  073E'   3E 0D                 	ld	a,CR
+  0740'   CD 0749'              	call	prn_a
+  0743'   3E 0A                 	ld	a,LF
+  0745'   18 02                 	jr	prn_a
+                                ;-----------------------------------
+                                ; печать пробела
+  0747'   3E 20                 prn_sp:	ld	a,' '
+                                ;-----------------------------------
+  0749'   C5                    prn_a:	push	bc
+  074A'   D5                    	push	de
+  074B'   E5                    	push	hl
+  074C'   5F                    	ld	e,a
+  074D'   0E 02                 	ld	c,2	;CONOUT
+  074F'   CD 0005               	call	bdos
+  0752'   E1                    	pop	hl
+  0753'   D1                    	pop	de
+  0754'   C1                    	pop	bc
+  0755'   C9                    	ret
+                                ;-----------------------------------
+                                ; Печать HL в HEX-формате
+  0756'   7C                    prn_hl:	ld	a,h
+  0757'   CD 075B'              	call	prn_hex
+  075A'   7D                    	ld	a,l
+                                ;	Печать A в HEX-формате
+  075B'   F5                    prn_hex:push	af
+  075C'   0F                    	rrca
+  075D'   0F                    	rrca
+  075E'   0F                    	rrca
+  075F'   0F                    	rrca
+  0760'   CD 0764'              	call	prtah1
+  0763'   F1                    	pop	af
+  0764'   E6 0F                 prtah1: and	0fh
+  0766'   FE 0A                 	cp	10
+  0768'   38 02                 	jr	c,prtah2	;ЕСЛИ КОД <= 9
+  076A'   C6 07                 	add	a,7
+  076C'   C6 30                 prtah2: add	a,'0'
+  076E'   18 D9                 	jr	prn_a
+                                ;******************************
+  0770'                         	DSEG
+  0000"                         FileObject:	ds	67
+  0043"                         FileHandle:	ds	2	;Дескриптор файла
+  0045"                         buf_mk:		ds	2050
+  0847"                         buf_fl:		ds	2050
+                                ;******************************
+                                	end	start
+Macro Assembler-80 v2.22D   (c) 1995,1996,1997 MOA  Page S
+
+
+Macros:
+
+Symbols:
+0092    ..MODE..                         0005    BDOS
+0847"   BUF_FL                           0045"   BUF_MK
+0714'   B_DUMP                           000D    CR
+0566'   C_FUS                            0645'   CC_MEM
+06D1'   CL_MEM                           0700'   CMP_FW
+0080    COMLIN                           071C'   C_DUMP
+053B'   CLK_OSC                          0709'   CP_CIKL
+06AD'   CRD_MEM                          0531'   DIV8_ON
+001A    EOF                              0660*   ERASE
+04C4'   E_SET                            069C'   ERR_FW
+04CC'   E_EXIT                           04C9'   E_SIGN
+0043"   FILEHANDLE                       0000"   FILEOBJECT
+0003'   HEADER                           04D5'   INI_OK
+000A    LF                               06E5*   LD_HB
+06DF*   LD_LB                            063F'   NO_CP
+06E8'   NO_PRG                           05D6'   NO_FILE
+062C'   NO_NAME                          059F'   NO_PROG
+0651'   NO_CLEAR                         0567'   OK_FUSE
+0749'   PRN_A                            01F0'   PORT_N
+0756'   PRN_HL                           0747'   PRN_SP
+0764'   PRTAH1                           076C'   PRTAH2
+072D'   PRN_DEC                          0714'   PRN_DMP
+075B'   PRN_HEX                          073E'   PRN_CRLF
+0507'   RD_FUS                           0603*   RD_HEX
+06AF*   RD_MEM                           04E4*   RD_SGN
+069F'   RD_CHIP                          0518*   RD_FUSE
+04D2*   RES_JOY                          04A3'   START
+04AC*   SET_J1                           04BC*   SET_J2
+06C4*   SET_PRG                          03C4'   T_OK
+01A5'   T_EOS                            03C9'   T_ERR
+007A'   T_SCH                            01DA'   T_CNCT
+02FF'   T_COMP                           0243'   T_EFUS
+033E'   T_EHEX                           025D'   T_EXIT
+0226'   T_FUSE                           039E'   T_PROG
+02AE'   T_READ                           0493'   TAB_CL8
+0483'   TAB_CLK                          037F'   T_CFWNM
+03E2'   T_CLK05                          0459'   T_CLKER
+03D1'   T_CLKEX                          046E'   T_CLKRE
+0440'   T_CLKWO                          03FB'   T_CLK_1
+0412'   T_CLK_4                          0429'   T_CLK_8
+01C0'   T_EFILE                          018B'   T_ENAME
+02EE'   T_ERASE                          0213'   T_ESIGN
+02CF'   T_FREAD                          0047'   T_NCNCT
+0142'   T_NFNAM                          022F'   T_NFUSE
+0364'   T_NFWNM                          0167'   T_NPROG
+01FC'   T_T2313                          03B3'   T_VERIF
+06F5*   WR_MEM                           06C3'   WR_CHIP
+0557*   WR_FUSL                          066B'   YES_CLEAR
+05CE*   _OPEN                            05A8*   _STDOS
+05C0*   _STSTR
+
+%DOS 16 bit detect: 5.50 loaded into low memory
+%Symbol table use 3 Kb (AVL-balanced B-Tree, intravel)
+Macro Assembler-80 v2.22D   (c) 1995,1996,1997 MOA  Page S-1
+
+
+%Start: 11 Jun 2009 09:34, Elapsed time: No timer found or your system too high-performance
+%Passes: 2
+
+No Fatal error(s)
+

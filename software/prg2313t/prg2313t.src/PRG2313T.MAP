@@ -1,0 +1,7 @@
+File     prg2313t
+Common block: 0000 ... 0000
+File     prg2313t, code: 0103 ... 0872, data: 2000 ... 3048
+File      rdwrspi, code: 0873 ... 08FF, data: 3049 ... 3049
+File       cmdavr, code: 0900 ... 09F1, data: 3049 ... 3049
+File         file, code: 09F2 ... 0F16, data: 3049 ... 3049
+File          hex, code: 0F17 ... 10B0, data: 3049 ... 324E

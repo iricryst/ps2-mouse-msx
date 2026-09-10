@@ -1,0 +1,586 @@
+;================================
+; Программирование ATTiny2313 	!
+;================================
+	EXTRN	set_j1,set_j2,res_joy
+	EXTRN	set_prg,rd_sgn,wr_fusl
+	EXTRN	rd_fuse,rd_mem
+	EXTRN	ld_lb,ld_hb,erase
+	EXTRN	rd_hex,wr_mem
+;
+BDOS	equ	0005h
+CR	equ	13
+LF	equ	10
+EOF	equ	1Ah
+COMLIN	equ	0080h
+;
+;===============================================
+;
+.z80
+;***********************************************
+	CSEG
+	jp	start
+;***********************************************
+; Заголовок
+header:	db	CR,LF
+	db	'Program ATTiny2313 on MSX ver.0.4',CR,LF
+	db	'(c) 2009 by caro k2k@list.ru',CR,LF,CR,LF,'$'
+; Микроконтроллер не подключен ни к одному из портов джойстика
+t_ncnct:db	'Error: CHIP is not found',CR,LF
+	db	'on any joystick port:',CR,LF,CR,LF
+; Схема подключения микроконтроллера к разьему джойстика
+t_sch:	db	' 1  RESET <-: STROBE (Joy-8pin)',CR,LF
+	db	'17  MOSI  <-: TrgA   (Joy-6pin)',CR,LF
+	db	'18  MISO  ->: Up     (Joy-1pin)',CR,LF
+	db	'19  SCK   <-: TrgB   (Joy-7pin)',CR,LF
+	db	'20  VDD   <-: +5V    (Joy-5pin)',CR,LF
+	db	'10  GND     : GND    (Joy-9pin)',CR,LF,'$',EOF
+; Прошивка контроллера без имени
+t_nfnam:db	'Info: Firmware in CHIP has no name',CR,LF,'$'
+; Новый или стертый микроконтроллер
+t_nprog:db	'Info: New or erased CHIP detected',CR,LF,'$'
+; Ошибка параметра программы (не допустимое имя файла)
+t_ename:db	'Error: Illegal filename',CR,LF,'$'
+; Не корректная версия DOS
+t_eos:	db	'Error: wrong DOS version',CR,LF,'$'
+; Ошибка открытия файла
+t_efile:db	'Error: cannot open file '
+t_nfile:db	'a:filename.hex',CR,LF,'$'
+	ds	16
+; Подключение к порту N
+t_cnct:	db	'Info: CHIP found on port No.'
+port_n:	db	'1',CR,LF
+; Сигнатура
+	db	'Sign. : $'
+; Тип подключенной микросхемы
+t_t2313:db	' -> ATMEL ATTiny2313',CR,LF,'$'
+; Неизвестный тип микроконтроллера
+t_esign:db	' -> Unknown CHIP',CR,LF,'$'
+; FUSES
+t_fuse:	db	'FUSES : $'
+; Запись нового значения FUSES
+t_nfuse:db	'Writing new FUSES',CR,LF,'$'
+; Ошибка записи FUSES
+t_efus:	db	'Error: cannot set FUSES',CR,LF,'$'
+; HEX-файл не задан (параметр программы отсутствует)
+t_exit:	db	'Error: Firmware HEX-file is omitted',CR,LF,CR,LF
+	db	'Synopsis:',CR,LF,CR,LF
+	db	'prg2313t [firmware HEX-file]',CR,LF,'$'
+; Чтение текущей прошивки микоконтроллера
+t_read:	db	CR,LF,'Reading firmware from CHIP... $'
+; Чтение прошивки из файла
+t_fread:db	'Reading firmware from FILE... $'
+; Прошивки совпадают, переписывать нет необходимости
+t_comp:	db	'CHIP & FILE contain the same firmware,',CR,LF
+	db	' no need to re-write',CR,LF,'$'
+; Ошибка формата HEX-файла
+t_ehex:	db	CR,LF
+	db	'Error: invalid format of HEX-file',CR,LF,'$'
+; Имя новой прошивки
+t_nfwnm:db	'Info: New firmware name:',CR,LF,'$'
+; Имя текущей прошивки
+t_cfwnm:db	'Info: Current firmware name:',CR,LF,'$'
+; Очистка памяти микроконтроллера
+t_erase:db	'Erasing CHIP....... $'
+; Программирование микроконтроллера:
+t_prog:	db	'Programming CHIP... $'
+; Верификация
+t_verif:db	'Verification....... $'
+; Норма
+t_OK:	db	'OK',CR,LF,'$'
+; Ошибка
+t_err:	db	'Error',CR,LF,'$'
+; Режим тактирования микроконтроллера
+t_clkex:db      ' -> Ext. Clock',CR,LF,'$'
+t_clk05:db	' -> Int. Clk = 0.5 MHz',CR,LF,'$'
+t_clk_1:db	' -> Int. Clk = 1 MHz',CR,LF,'$'
+t_clk_4:db	' -> Int. Clk = 4 MHz',CR,LF,'$'
+t_clk_8:db	' -> Int. Clk = 8 MHz',CR,LF,'$'
+t_clkwo:db	' -> Wdog Clk = 128 kHz',CR,LF,'$'
+t_clker:db	' -> Ext. Resonator',CR,LF,'$'
+t_clkre:db	' -> Reserved FUSES',CR,LF,'$'
+;================================================
+;CLKDIV8=1 -> CLK=CLK
+tab_clk:dw	t_clkex	;0 ' -> Ext. Clock'
+	dw	t_clkre	;1 ' -> Reserved FUSES'
+	dw	t_clk_4	;2 ' -> Int. Clk = 4 MHz'
+	dw	t_clkre	;3 ' -> Reserved FUSES'
+	dw	t_clk_8	;4 ' -> Int. Clk = 8 MHz'
+	dw	t_clkre	;5 ' -> Reserved FUSES'
+	dw	t_clkwo	;6 ' -> Wdog Clk = 128 kHz'
+	dw	t_clkre	;7 ' -> Reserved FUSES'
+;CLKDIV8=0 -> CLK=CLK/8
+tab_cl8:dw	t_clkex	;0 ' -> Ext. Clock'
+	dw	t_clkre	;1 ' -> Reserved FUSES'
+	dw	t_clk05	;2 ' -> Int. Clk = 0.5 MHz'
+	dw	t_clkre	;3 ' -> Reserved FUSES'
+	dw	t_clk_1	;4 ' -> Int. Clk = 1 MHz'
+	dw	t_clkre	;5 ' -> Reserved FUSES'
+	dw	t_clkwo	;6 ' -> Wdog Clk = 128 kHz'
+	dw	t_clkre	;7 ' -> Reserved FUSES'
+;*****************************************************
+Start:	ld	de,header	;заголовок программы
+	ld	c,9		;print message
+	call	bdos
+;==================================================
+	call	_STDOS##
+	ld	de,t_eos	;'Error OC'
+	jr	nz,e_exit	;выход с ошибкой 1
+;
+	ld	a,(COMLIN)	;
+	or	a
+	ld	bc,0ffffh	;
+	jr	z,no_file	;не задано имя файла
+; имя файла в строку вывода
+	ld	hl,COMLIN + 1
+	ld	de,t_nfile
+	call	LDIRWZ##
+	ex	de,hl
+	dec	hl
+	ld	(hl),CR
+	inc	hl
+	ld	(hl),LF
+	inc	hl
+	ld	(hl),'$'
+; Параметр вызова - имя HEX-файла для записи в МК
+	ld	hl,COMLIN + 1
+	ld	de,FileObject
+	call	_STSTR##
+	ld	de,t_ename	;'Error parametr'
+	jr	z,e_exit	;выход с ошибкой 2
+; Открыть файл для чтения
+	ld	de,FileObject
+	ld	b,0
+	call	_OPEN##
+	ld	de,t_efile	;'Error open file'
+	jr	nz,e_exit	;выход с ошибкой 3
+; Файл найден
+no_file:ld	(FileHandle),bc	;
+;=================================================
+; проверить подключение контроллера
+	call	set_j1		;Задать Джойстик 1
+; прочитать сигнатуру МК
+	call	set_prg		;Задать режим программирования МК
+	jr	z,ini_ok	;подключен к порту 1
+; проверить второй порт
+	call	res_joy		;вернуть назад
+	ld	a,'2'
+	ld	(port_n),a	;номер порта джойстика
+	call	set_j2		;Задать Джойстик 2
+	call	set_prg		;Задать режим программирования МК
+	jr	z,ini_ok	;подключен к порту 2
+	ei
+; Не обнаружено подключение МК к MSX
+e_set:	ld	de,t_ncnct	;'CHIP not connect to MSX:'
+e_exit:	ld	c,9
+	call	bdos
+	call	res_joy
+	rst	0
+e_sign:	ld	de,t_esign	;' -> Not a known type'
+	jr	e_exit
+;====================================
+; МК подключен к одному из портов джойстика
+ini_ok:	ei
+; Напечатать имя порта, куда подключен МК
+        ld	de,t_cnct	;'Connect to port 1|2'
+	ld	c,9
+	call	bdos
+; Прочитать сигнатуру
+	call	set_prg
+	jr	nz,e_set
+	call	rd_sgn		;прочитать сигнатуру МК
+;   D,  E,  C = 3 байта сигнатуры
+; 0Ah,91h,1Eh -> ATTiny2313
+	ei
+	push	de
+	push	bc
+	call	prn_dec		; напечатать сигнатуру
+	pop	bc
+	pop	de
+; сравнить сигнатуру с шаблоном
+	ld	a,d
+	cp	0ah
+	jr	nz,e_sign	;Ошибка типа МК
+	ld	a,e
+	cp	91h
+	jr	nz,e_sign       ;
+	ld	a,c
+	cp	1eh
+	jr	nz,e_sign	;
+; Сигнатура совпала
+	ld	de,t_t2313	;' -> ATTiny2313'
+	ld	c,9
+	call	bdos 	
+;------
+; прочитать FUSES
+	ld	a,2		;1 попытка записи FUSES
+rd_fus:	ld	(c_fus),a	;счетчик записи FUSES
+	ld	de,t_fuse	;'FUSES: '
+	ld	c,9
+	call	bdos
+;
+	call	set_prg
+	jr	nz,e_set
+	call	rd_fuse		;прочитать FUSES
+;   D,  E,  C = 3 байта FUSES  (E4 DF FF)
+	ei
+	call	prn_dec		;напечатать FUSES
+	push	de
+; Определить частоту по FUSES
+;--------------------------------------------
+; LOW BYTE             DEF     SET
+;--------------------------------------------
+; 7 - CLKDIV8           0       1
+; 6 - CKOUT             1       1
+; 5 - SUT1              1       1
+; 4 - SUT0              0       0
+; 3 - CKSEL3   		0       0
+; 2 - CKSEL2            1       1
+; 1 - CKSEL1            0       0
+; 0 - CKSEL0            0       0
+;--------------------------------------------
+	ld	a,d		;FUSE LOW
+	ld	de,t_clker	;'External Oscillator'
+	bit	3,a		;CLKSEL3=1 ?
+	jr	nz,clk_osc	; да
+; CLKSEL3=0
+	ld	bc,tab_cl8
+	bit	7,a		;CLKDIV8 ?
+	jr	z,div8_on	;если 0, CLK/8
+; div8=1 CLK=CLK
+	ld	bc,tab_clk
+div8_on:and	007h		;CLKSEL2..0 ?
+	ld	l,a
+	ld	h,0
+	add	hl,hl		;*2
+	add	hl,bc		;
+	ld	e,(hl)
+	inc	hl
+	ld	d,(hl)		;de=адрес сообщения
+clk_osc:ld	c,9
+	call	bdos		;Печать частоты
+; сравнить FUSE с требуемым шаблоном
+	pop	de
+	ld	a,d
+	cp	0e4h		;DIV8=1,CLK=8Mhz
+	jr	z,ok_fuse
+;
+	ld	bc,(filehandle)	;Если файл прошивки
+	inc	bc		;не задан (FH=-1)
+	ld	a,b		; то FUSES не переписывать
+	or	c		;  а только показать
+	jr	z,ok_fuse	;
+; Ecли FUSES не соответствует заданным
+	ld	de,t_nfuse	;'Write new FUSES'
+	ld	c,9
+	call	bdos
+; Записать
+	call	set_prg
+	jp	nz,e_set	;ошибка инициализации
+;
+	ld	e,0e4h
+	call	wr_fusl		;записать новый FUSES
+	ei
+	ld	a,(c_fus)
+	dec	a
+	jr	nz,rd_fus	;снова прочитать FUSES
+; Ошибка записи FUSES
+	ld	de,t_efus	;'Error set FUSES'
+	jp	e_exit
+c_fus:	db	0		;счетчик записи FUSES
+;-------
+ok_fuse:
+; Прочитать в буфер прошивку контроллера
+	ld	de,t_read	;'Read firmware from CHIP... '
+	ld	c,9
+	call	bdos
+; Читаем текущую прошивку в буфер
+	call	rd_chip		;Читаем
+	jp	nz,e_set	;ошибка инициализации
+	ei
+	ld	(ix+0),'$'	;конец текста в буфер
+;
+	ld	de,t_OK		;OK
+	ld	c,9
+	call	bdos
+; проверить, запрограммирован ли МК
+	ld	a,(buf_mk)	;Первый байт в чипе ?
+	inc	a		; если = 0FFh
+	ld	de,t_nprog	;'Clearing MK'
+	jr	z,no_prog
+;
+	ld	de,t_cfwnm	;'Current firmware name:'
+	ld	c,9
+	call	bdos
+; проверить есть ли текст в конце прошивки
+	ld	a,(buf_mk+2048-32)
+	inc	a
+	ld	de,t_nfnam	;'No name firmware'
+	jr	z,no_prog	;
+; Напечатать имя прошивки
+	ld	de,buf_mk+2048-32
+no_prog:ld	c,9
+	call	bdos
+	call	prn_crlf
+;==============================================
+; если задано имя файла прошивки, прочитать его в буфер
+	ld	hl,(FileHandle)
+	inc	hl
+	ld	a,l
+	or	h
+	ld	de,t_exit	;'HEX-file is not given'
+	jp	z,e_exit	;имя не задано
+;=============================================
+	ld	de,t_fread	;'Read firmware from FILE:... '
+	ld	c,9
+	call	bdos
+; буфер файла заполняем кодом 0ffh
+	ld	hl,buf_fl
+	ld	de,buf_fl+1
+	ld	bc,2048-1
+	ld	(hl),0ffh	;
+	ldir
+; читаем HEX-файл
+	ld	de,buf_fl	;адрес буфера чтения
+	ld	bc,(FileHandle)	;дескриптор файла
+	call	rd_hex		;Прочитать HEX-файл
+	ld	de,t_ehex	;'Error of format HEX-file'
+	jp	c,e_exit	; ВЫХОД с ошибкой
+;
+	ld	de,t_OK		;OK
+	ld	c,9
+	call	bdos
+;
+	ld	de,t_nfwnm	;'File firmware name:'
+	ld	c,9
+	call	bdos
+; напечатать имя новой прошивки если задано
+	ld	a,(buf_fl+2048-32)
+	inc	a
+	ld	de,t_nfnam	;текст без имени
+	jr	z,no_name
+;
+	ld	a,'$'		;флаг конца текста
+	ld	(buf_fl+2048),a
+	ld	de,buf_fl+2048-32
+no_name:ld	c,9
+	call	bdos
+	call	prn_crlf
+; сравнить буфера текущей прошивки и файла
+	call	cmp_fw		;СРАВНЕНИЕ
+	jr	nz,no_cp	;если Z=0, не совпадают
+; обе прошивки совпадают, незачем переписывать
+	ld	de,t_comp	;'The Firmware match'
+	jp	e_exit		; ВЫХОД
+;======================================
+; прошивки отличаются, значит переписать
+no_cp:
+; стереть память МК если надо
+; для этого проверить что МК чист
+	ld	hl,buf_mk	;
+	ld	bc,2048		;
+cc_mem:	ld	a,(hl)
+	inc	a
+	jr	nz,no_clear
+	inc	hl
+	dec	bc
+	ld	a,c
+	or	b
+	jr	nz,cc_mem
+	jr	yes_clear
+no_clear:
+	ld	de,t_erase	;'Erase CHIP...'
+	ld	c,9
+	call	bdos
+;
+	call	set_prg		;Задать режим программирования МК
+	jp	nz,e_set	;
+;
+	call	erase		;очистить МК
+	ei
+	ld	de,t_ok		;'OK'
+	ld	c,9
+	call	bdos
+yes_clear:
+; записать в МК новую прошивку
+	ld	de,t_prog	;'Programm CHIP:... '
+	ld	c,9
+	call	bdos
+;
+	call	wr_chip		;Пишем
+	jp	nz,e_set
+; Записалось
+	ld	de,t_ok		;'OK'
+	ld	c,9
+	call	bdos
+; проверить что залилось нормально
+; читаем прошивку снова
+	ei
+	ld	de,t_verif	;'Verification:'
+	ld	c,9
+	call	bdos
+; Прочитать в буфер прошивку контроллера
+	call	rd_chip		;читать в буфер
+	jp	nz,e_set	; выход с ошибкой
+	ei
+	call	cmp_fw		;Сравнить прошивки
+	ld	de,t_err
+	jr	nz,err_fw	;не совпадение
+; прошивки полностью совпадают
+	ld	de,t_ok		;
+err_fw:	jp	e_exit		;ВЫХОД
+;***** КОНЕЦ ПРОГРАММЫ ************************
+;==============================================
+;===== ПРОЦЕДУРЫ ==============================
+;==============================================
+; Читать прошивку в буфер
+rd_chip:call	set_prg		;Задать режим программирования МК
+	ret	nz		; выход с ошибкой
+; Цикл чтения памяти
+	ld	hl,0h		;с адреса в МК
+	ld	bc,2048/2	;весь обьем памяти 2 кб
+	ld	ix,buf_mk	;записывать в буфер
+;/-------------------------------
+crd_mem:push	bc
+	call	rd_mem		;de=(hl)
+	inc	hl
+	ld	(ix+0),e
+	ld	(ix+1),d
+	inc	ix
+	inc	ix
+	pop	bc
+	dec	bc
+	ld	a,c
+	or	b
+	jr	nz,crd_mem
+;\-------------------------------
+	ret			;выход OK Z=1
+;==============================================
+; Записать прошивку из буфера
+wr_chip:call	set_prg		;Задать режим программирования МК
+	ret	nz		; Выход с ошибкой
+;
+	ld	hl,0h		;с адреса в МК
+	ld	bc,2048/2	;весь обьем памяти 2048 байт
+	ld	ix,buf_fl	;записывать из буфера
+;/-------------------------------
+cl_mem:	ld	a,(ix+0)	;
+	and	(ix+1)
+	inc	a		;если оба байта = 0ffh,
+	jr	z,no_prg	;не надо программировать
+	push	bc
+	ld	e,(ix+0)
+	call	ld_lb		;загрузить мл.байт
+	ld	e,(ix+1)
+	call	ld_hb		;загрузить ст.байт
+	pop	bc
+no_prg:	inc	ix
+	inc	ix
+	inc	hl
+	ld	a,l
+	and	0fh		;от 0xx0 до 0xxFh
+	jr	nz,cl_mem	;догрузить страницу
+; запрограммировать страницу
+	dec	hl		;
+	push	bc
+	call	wr_mem		;записать страницу 32 байта
+	pop	bc
+	inc	hl
+	ld	a,h
+	and	0fch		;до 3ffh
+	jr	z,cl_mem
+;\-------------------------------
+	xor	a		;Z=1
+	ret			; Выход OK
+;=============================================
+; сравнить прошивки
+cmp_fw:	ld	hl,buf_mk
+	ld	de,buf_fl
+	ld	bc,2048
+cp_cikl:ld	a,(de)
+	cp	(hl)
+	ret	nz		;нет совпадения
+	inc	hl
+	inc	de
+	dec	bc
+	ld	a,c
+	or	b
+	jr	nz,cp_cikl
+	ret			;есть совпадение
+;==============================================
+; Печать текста
+;==============================================
+; Печать дампа памяти
+; HL - адрес
+; DE - длина
+prn_dmp:
+b_dump:	call	prn_crlf
+	ld	b,8
+	call	prn_hl		;адрес
+c_dump:	call	prn_sp
+	ld	a,(hl)
+	call	prn_hex
+	inc	hl
+	dec	de
+	ld	a,e
+	or	d
+	jr	z,prn_crlf	;exit
+	djnz	c_dump
+	jr	b_dump
+;-----------------------------------
+; Напечатать коды D,E,C в виде: XX XX XX
+prn_dec:ld	a,d
+	call	prn_hex
+	call	prn_sp
+	ld	a,e
+	call	prn_hex
+	call	prn_sp
+	ld	a,c
+	jr	prn_hex
+;-----------------------------------
+; переход на новую строку
+prn_crlf:
+	ld	a,CR
+	call	prn_a
+	ld	a,LF
+	jr	prn_a
+;-----------------------------------
+; печать пробела
+prn_sp:	ld	a,' '
+;-----------------------------------
+prn_a:	push	bc
+	push	de
+	push	hl
+	ld	e,a
+	ld	c,2	;CONOUT
+	call	bdos
+	pop	hl
+	pop	de
+	pop	bc
+	ret
+;-----------------------------------
+; Печать HL в HEX-формате
+prn_hl:	ld	a,h
+	call	prn_hex
+	ld	a,l
+;	Печать A в HEX-формате
+prn_hex:push	af
+	rrca
+	rrca
+	rrca
+	rrca
+	call	prtah1
+	pop	af
+prtah1: and	0fh
+	cp	10
+	jr	c,prtah2	;ЕСЛИ КОД <= 9
+	add	a,7
+prtah2: add	a,'0'
+	jr	prn_a
+;******************************
+	DSEG
+FileObject:	ds	67
+FileHandle:	ds	2	;Дескриптор файла
+buf_mk:		ds	2050
+buf_fl:		ds	2050
+;******************************
+	end	start

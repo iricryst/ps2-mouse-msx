@@ -1,0 +1,36 @@
+FUSES для ATTiny2313 
+в контроллере PS/2 mouse:
+---------------------------------------
+ Name     ! Default  V  !   SET ! MODE
+---------------------------------------
+CKSEL0    !    on   on  !   on  !\
+CKSEL1    !    on   off !   on  ! \ - Внутр.ген.8 Мгц
+CKSEL2    !   off   on  !  off  ! /
+CKSEL3    !    on   on  !   on  !/
+SUT0      !    on   on  !   on  !
+SUT1      !   off   off !  off  !
+CKOUT     !   off   off !  off  !
+CKDIV8    !    on   on  !  off  ! Делитель 1:8 выключен
+              64h   62h    E4h
+---------------------------------------
+RSTDISBL  !   off   off !  off  !
+BODLEVEL0 !   off   off !  off  !\
+BODLEVEL1 !   off   off !   on  ! - 2.7 Вольт 
+BODLEVEL2 !   off   off !  off  !/
+WDTON     !   off   off !  off  !
+SPIEN     !    on   on  !   on  ! Последоват.прогр.разрешено
+EESAVE    !   off   off !  off  !
+DWEN      !   off   off !  off  !
+              DFh   DFh    DBh
+---------------------------------------
+SELFPRGEN !   off   off !  off  !
+                           FFh
+----------------------------------------
+микросхемы с индексом V имеют по умолчанию другое
+значение FUSES для выбора частоты, не 8, а 4 Мгц.
+
+Камиль Каримов (caro)
+2009...2023
+k2k@list.ru
+http://caro.su
+ 

@@ -1,0 +1,1236 @@
+.z80
+; * FILE LIBRARY *
+	CSEG
+	ENTRY	UPPERB
+		;>,A=CHR CODE
+		;<,A=CHANGED CHR CODE
+		;*,AF
+		;I,/
+	ENTRY	LDIRWZ
+		;>,HL=SOURCE ADR,DE=DESTI. ADR
+		;<,/
+		;*,AF
+		;I,/
+	ENTRY	_STDOS
+		;>,/
+		;<,NZ;ERROR/Z;OK
+		;*,AF,BC,DE,HL,AF',BC',DE',HL',IX,IY
+		;I,?
+	ENTRY	_OSEND
+		;>,/
+		;<,/
+		;*,AF,BC,DE,HL
+		;I,/
+	ENTRY	_EXIT
+		;>,A=EXIT CODE
+		;<,/
+		;*,/
+		;I,/
+	ENTRY	_KNJMD
+		;>,/
+		;>,/
+		;*,AF,BC,DE,HL
+		;I,/
+	ENTRY	_STSTR
+		;>,HL=COMMAND LINE STRINGS,DE=BUF(67bytes)
+		;<,Z;ERROR/NZ;HL=HL+LEN(STRINGS)
+		;*,AF,BC,DE
+		;I,/
+	ENTRY	_STNUL
+		;>,DE=BUF(67bytes),A=TYPE,HL=ASCII ATR(A=0FFH ONLY)
+		;<,/
+		;*,AF,BC,DE,HL
+		;I,/
+	ENTRY	_JGDIR
+		;>,DE=FILE STRINGS(GIVEN BY _STSTR)
+		;<,/
+		;*,AF,BC,DE,HL
+		;I,?
+	ENTRY	_FSRCH
+		;>,HL=FILE STRINGS(GIVEN BY _STSTR),DE=BUF(67bytes)
+		;>,B=FILE ATTRIBUTE
+		;<,NZ;ERROR/Z;OK
+		;*,AF,BC,DE,HL,AF',BC',DE',HL',IX,IY
+		;I,?
+	ENTRY	_NSRCH
+		;>,DE=BUF(USED IN _FSRCH)
+		;<,NZ;ERROR/Z;OK
+		;*,AF,BC,DE,HL,AF',BC',DE',HL',IX,IY
+		;I,?
+	ENTRY	_MKNEW
+		;>,HL=FILE STRINGS(GIVEN BY _STSTR),DE=BUF(64bytes)
+		;>,B=FILE ATTRIBUTE,IX=TEMPLET(FILE OBJ.)
+		;<,NZ;ERROR/Z;OK
+		;*,AF,BC,DE,HL,AF',BC',DE',HL',IX,IY
+		;I,?
+	ENTRY	_GTSTR
+		;>,HL=FILE OBJECT(GIVEN BY _FSRCH/_NSRCH/_MKNEW)
+		;>,DE=BUF(67bytes)
+		;<,NZ;ERROR/Z;OK,HL=POINTER TO FILENAME
+		;*,AF,BC,HL,IX,IY
+		;I,?
+	ENTRY	_FCOMP
+		;>,DE=FIB|FILE STRINGS(GIVEN BY _STSTR)|BUF(USED IN _xSRCH)
+		;>,BC=EXTENDED FILE HANDLE
+		;<,Z;EQUAL/NZ;NOT EQUAL
+		;*,AF,BC,DE,HL,IX,IY
+		;I,?
+	ENTRY	_OPEN
+		;>,DE=FIB|FILE STRINGS(GIVEN BY _STSTR)|BUF(USED IN _xSRCH)
+		;<,NZ;ERROR/Z;BC=EXTENDED FILE HANDLE
+		;*,AF,BC,DE,HL,AF',BC',DE',HL',IX,IY
+		;I,?
+	ENTRY	_MAKE
+		;>,DE=FIB|FILE STRINGS(GIVEN BY _STSTR)|BUF(USED IN _xSRCH)
+		;<,NZ;ERROR/Z;BC=EXTENDED FILE HANDLE
+		;*,AF,BC,DE,HL,AF',BC',DE',HL',IX,IY
+		;I,?
+	ENTRY	_SEEK
+		;>,DE:HL=FILE POINTER,A=OFFSET CODE,BC=EXTENDED FILE HANDLE
+		;<,DE:HL=NEW FILE POINTER
+		;*,AF,BC,DE,HL,AF',BC',DE',HL',IX,IY
+		;I,?
+	ENTRY	_READ
+		;>,BC=EXTENDED FILE HANDLE,DE=BUF,HL=SIZE
+		;<,NZ;ERROR/Z;HL=SIZE
+		;*,AF,BC,DE,HL,AF',BC',DE',HL',IX,IY
+		;I,?
+	ENTRY	_WRITE
+		;>,BC=EXTENDED FILE HANDLE,DE=BUF,HL=SIZE
+		;<,NZ;ERROR/Z;OK
+		;*,AF,BC,DE,HL,AF',BC',DE',HL',IX,IY
+		;I,?
+	ENTRY	_CLOSE
+		;>,BC=EXTENDED FILE HANDLE
+		;<,NZ;ERROR/Z;OK
+		;*,AF,BC,DE,HL,AF',BC',DE',HL',IX,IY
+		;I,?
+	ENTRY	_FRUSH
+		;>,BC=EXTENDED FILE HANDLE
+		;<,NZ;ERROR/Z;OK
+		;*,AF,BC,DE,HL,AF',BC',DE',HL',IX,IY
+		;I,?
+	ENTRY	_ATTRB
+		;>,BC=EXTENDED FILE HANDLE
+		;>,A=0:GET,1;SET
+		;>,L=ATTRIBUTE(WHEN A=1)
+		;<,NZ;ERROR/Z;OK
+		;<,A=ATTRIBUTE
+		;*,AF,BC,DE,HL,AF',BC',DE',HL',IX,IY
+		;I,?
+	ENTRY	_STOUT
+		;>,DE=BUF,HL=SIZE
+		;<,NZ;ERROR/Z;OK
+		;*,AF,BC,DE,HL,AF',BC',DE',HL',IX,IY
+		;I,?
+	ENTRY	_SCSIZ
+		;>,/
+		;<,NZ;ERROR/Z;OK,E=LINE LEN,D=LINES
+		;*,AF,BC,HL,AF',BC',DE',HL',IX,IY
+		;I,?
+	ENTRY	_FSDRV
+		;>,DE=FIB|FILE STRINGS(GIVEN BY _STSTR)|BUF(USED IN _xSRCH)
+		;<,A=DRIVE No.(0:A,1:B,...,7:H)
+		;*,AF,HL
+		;I,/
+	ENTRY	_GTCUR
+		;>,DE=BUF(67BYTES)
+		;<,NZ;ERROR
+		;*,AF,BC,DE,HL,IX,IY
+	ENTRY	_CKEOF
+		;>,BC=EXTENDED FILE HANDLE
+		;<,A=FFH:EOF,00H:NOT EOF
+		;*,F,BC,HL,AF',BC',DE',HL',IX,IY
+
+KNJMOD	EQU	0F30FH		;4
+H.PROM	EQU	0F24FH		;3
+DISKVE	EQU	0F323H		;2
+W_BOOT	EQU	00000H		;2
+DOSSYS	EQU	00005H
+LINLEN	EQU	0F3B0H
+CRTCNT	EQU	0F3B1H
+.FILEX	EQU	000CBH
+;==============================================
+UPPERB:
+	CP	'a'
+	RET	C
+	CP	'z'+1
+	RET	NC
+	ADD	A,'A'-'a'
+	RET
+;----------------------------------------------
+LDIRWZ:	LD	A,(HL)
+	LD	(DE),A
+	INC	HL
+	INC	DE
+	OR	A
+	JR	NZ,LDIRWZ
+	RET
+;----------------------------------------------
+STDOUT	EQU	_STSTR.H
+;WOKBUF	EQU	_STDOS
+FILTMP	EQU	WOKBUF+4+3+2+2
+;
+WOKBUF::
+_STDOS:				;34bytes
+	LD	C,6FH
+	CALL	DOSSYS
+	OR	A
+	RET	NZ
+	INC	A
+	CP	B
+	JR	NC,_STDOS1
+	LD	A,B
+_STDOS1:
+	LD	(OSVER),A	;OS version
+	LD	C,19H
+	CALL	DOSSYS
+	INC	A
+	LD	(CURDRV),A
+
+	LD	HL,0080H
+	LD	C,(HL)
+	LD	B,H
+	INC	HL
+	ADD	HL,BC
+	LD	(HL),B
+
+	LD	DE,WOKBUF
+	LD	HL,KNJMOD
+	LD	BC,4
+	LDIR
+	LD	HL,H.PROM
+	LD	C,3
+	LDIR
+	LD	HL,DISKVE
+	LD	C,2
+	LDIR
+	LD	HL,W_BOOT+1
+	LD	C,2
+	LDIR
+	LD	A,(OSVER)
+	DEC	A
+	LD	HL,_STDOS00
+	LD	DE,STDOUT
+	CALL	Z,_STSTR.L
+	CP	A
+	RET
+;
+_STDOS00:
+	DB	'CON',00H
+;------------------------------------------
+_STSTR.L:
+	INC	HL
+	LD	A,(HL)
+	DEC	HL
+	CP	':'
+CURDRV@:
+	LD	A,00H
+	JR	NZ,_STSTR.L1
+
+	LD	A,(HL)
+	INC	HL
+	INC	HL
+	CALL	UPPERB
+	SUB	'A'
+	AND	07H
+	INC	A
+;
+_STSTR.L1:
+	LD	(DE),A
+	INC	DE
+
+	LD	BC,800H+'.'
+	CALL	_STSTR.L2
+	LD	BC,300H+'/'
+	CALL	_STSTR.L2
+
+	PUSH	HL
+	LD	BC,37-(1+8+3)-1
+	LD	H,D
+	LD	L,E
+	INC	DE
+	LD	(HL),B
+	LDIR
+	POP	HL
+	DEC	B
+	RET
+
+_STSTR.L2:
+	LD	A,(HL)
+	OR	A
+	JR	Z,_STSTR.L3
+
+	CP	20H
+	JR	Z,_STSTR.L3
+
+	CP	09H
+	JR	Z,_STSTR.L3
+
+	CP	'/'
+	JR	Z,_STSTR.L3
+
+	INC	HL
+	CP	'*'
+	JR	Z,_STSTR.L4
+
+	CP	C
+	JR	Z,_STSTR.L5
+
+	LD	(DE),A
+	INC	DE
+	DJNZ	_STSTR.L2
+	JR	_STSTR.L7
+
+_STSTR.L3:
+	LD	A,8
+	CP	B
+	JR	NZ,_STSTR.L5
+
+	LD	B,8+3
+
+_STSTR.L4:
+	LD	A,'?'
+	JR	Z,_STSTR.L6
+
+_STSTR.L5:
+	LD	A,20H
+
+_STSTR.L6:
+	LD	(DE),A
+	INC	DE
+	DJNZ	_STSTR.L6
+
+_STSTR.L7:
+	LD	B,4
+	PUSH	HL
+
+_STSTR.L8:
+	LD	A,(HL)
+	INC	HL
+	OR	A
+	JR	Z,_STSTR.L10
+
+	CP	20H
+	JR	Z,_STSTR.L10
+
+	CP	09H
+	JR	Z,_STSTR.L10
+
+	CP	'/'
+	JR	Z,_STSTR.L10
+
+	CP	C
+	JR	Z,_STSTR.L9
+	DJNZ	_STSTR.L8
+	POP	HL
+	RET
+
+_STSTR.L9:
+	EX	(SP),HL
+	POP	HL
+	RET
+
+_STSTR.L10:
+	POP	HL
+	RET
+
+_STSTR:
+	LD	A,(HL)
+	OR	A
+	RET	Z
+
+	CP	'/'
+	RET	Z
+
+	CP	20H
+	JR	Z,_STSTR1
+
+	CP	09H
+	JR	NZ,_STSTR2
+
+_STSTR1:
+	INC	HL
+	JR	_STSTR
+
+_STSTR2:
+	LD	A,(OSVER)
+	DEC	A
+	JP	Z,_STSTR.L
+
+_STSTR.H:
+	INC	HL
+	LD	A,(HL)
+	DEC	HL
+	CP	':'
+	JR	Z,_STSTR.H0
+
+	LD	A,(CURDRV)
+	ADD	A,'A'-1
+	LD	(DE),A
+	INC	DE
+	LD	A,':'
+	LD	(DE),A
+	INC	DE
+
+_STSTR.H0:
+	LD	B,2+1+64-1
+
+_STSTR.H1:
+	LD	A,(HL)
+	LD	(DE),A
+	OR	A
+	JR	Z,_STSTR.H3
+
+	SUB	09H
+	JR	Z,_STSTR.H3
+
+	SUB	20H-09H
+	JR	Z,_STSTR.H3
+
+	SUB	'/'-20H
+	JR	Z,_STSTR.H3
+
+	INC	HL
+	INC	DE
+	DJNZ	_STSTR.H1
+
+_STSTR.H2:
+	LD	A,(HL)
+	OR	A
+	JR	Z,_STSTR.H3
+
+	SUB	09H
+	JR	Z,_STSTR.H3
+
+	SUB	20H-09H
+	JR	Z,_STSTR.H3
+
+	SUB	'/'-20H
+	JR	Z,_STSTR.H3
+
+	INC	HL
+	JR	_STSTR.H2
+
+_STSTR.H3:
+	LD	(DE),A
+	DEC	A
+	RET
+
+
+
+_KNJMD:
+	LD	HL,_KNJMD00
+	LD	DE,KNJMOD
+	LD	C,4
+	LDIR
+	RET
+
+_KNJMD00:
+	DB	80H,0A0H,0E0H,0FDH
+
+
+
+_OSEND:
+	LD	HL,WOKBUF
+	LD	DE,KNJMOD
+	LD	BC,4
+	LDIR
+	LD	DE,H.PROM
+	LD	C,3
+	LDIR
+	LD	DE,DISKVE
+	LD	C,2
+	LDIR
+	LD	DE,W_BOOT+1
+	LD	C,2
+	LDIR
+	RET
+
+
+
+_EXIT:
+	LD	B,A
+	LD	A,(OSVER)
+	DEC	A
+	JR	NZ,_EXIT.H
+
+_EXIT.L:
+	LD	C,00H
+	CALL	DOSSYS
+
+_EXIT.H:
+	LD	C,62H
+	CALL	DOSSYS
+
+
+
+_STNUL:
+	INC	A
+	JR	Z,_STNUL1
+
+	LD	HL,_STNUL00
+	DEC	A
+	JR	Z,_STNUL1
+
+	LD	HL,_STNUL01
+
+_STNUL1:
+	LD	B,A
+	LD	A,(OSVER)
+	DEC	A
+	JP	Z,_STSTR.L
+
+_STNUL.H:
+	LD	A,(HL)
+	INC	A
+	JP	NZ,LDIRWZ
+
+	LD	BC,64
+	LDIR
+	RET
+
+_STNUL00:
+	DB	'*.*',00H
+_STNUL01:
+	DB	'CON',00H
+
+
+
+_JGDIR:
+	LD	A,(OSVER)
+	RET	Z
+
+_JGDIR.H:
+	LD	A,(DE)
+	INC	A
+	RET	Z
+
+	LD	C,A
+	INC	DE
+	LD	A,(DE)
+	CP	':'
+	JR	NZ,_JGDIR.H1
+
+	INC	DE
+	LD	A,(DE)
+	DEC	DE
+	OR	A
+	JR	NZ,_JGDIR.H1
+
+	LD	A,C
+	CALL	UPPERB
+	SUB	'A'
+	LD	B,A
+	EX	DE,HL
+	INC	HL
+	JP	_GTCUR.H
+
+_JGDIR.H1:
+	DEC	DE
+	LD	H,D
+	LD	L,E
+	XOR	A
+	LD	BC,0FFH
+	CPIR
+	RET	NZ
+
+	DEC	HL
+	LD	(_JGDIR.H@1+1),HL
+	DEC	HL
+	LD	A,(HL)
+	SUB	'\'
+	RET	Z
+
+	PUSH	DE
+	LD	BC,005BH
+	CALL	DOSSYS
+	POP	DE
+	LD	A,B
+	AND	00100000B
+	RET	NZ
+
+	LD	IX,FILTMP
+	LD	BC,00110111B*100H+40H
+	CALL	DOSSYS
+	OR	A
+	RET	NZ
+
+	LD	A,(FILTMP+14)
+	AND	10000B
+	RET	Z
+
+_JGDIR.H@1:
+	LD	HL,0000H
+	LD	(HL),'\'
+	INC	HL
+	LD	(HL),00H
+	RET
+
+
+
+_FSRCH:
+	LD	A,(OSVER)
+	DEC	A
+	JR	NZ,_FSRCH.H
+
+_FSRCH.L:
+	PUSH	HL
+	LD	C,1AH
+	CALL	DOSSYS
+	POP	DE
+	LD	C,11H
+	CALL	DOSSYS
+	OR	A
+	RET
+
+_FSRCH.H:
+	PUSH	DE
+	POP	IX
+	EX	DE,HL
+	LD	C,40H
+	CALL	DOSSYS
+	OR	A
+	RET
+
+
+
+_NSRCH:
+	LD	A,(OSVER)
+	DEC	A
+	JR	NZ,_NSRCH.H
+
+_NSRCH.L:
+	LD	C,1AH
+	CALL	DOSSYS
+	LD	C,12H
+	CALL	DOSSYS
+	OR	A
+	RET
+
+_NSRCH.H:
+	PUSH	DE
+	POP	IX
+	LD	C,41H
+	CALL	DOSSYS
+	OR	A
+	RET
+
+
+
+_MKNEW:
+	LD	A,(OSVER)
+	DEC	A
+	JR	NZ,_MKNEW.H
+
+_MKNEW.L:
+	PUSH	DE
+	PUSH	HL
+	EXX
+	POP	HL
+	POP	DE
+	LD	A,(HL)
+	LD	(DE),A
+	LD	B,8+3
+
+_MKNEW.L1:
+	INC	HL
+	INC	DE
+	INC	IX
+	LD	A,(HL)
+	CP	'?'
+	JR	NZ,_MKNEW.L2
+
+	LD	A,(IX)
+
+_MKNEW.L2:
+	LD	(DE),A
+	DJNZ	_MKNEW.L1
+
+	INC	DE
+	LD	H,D
+	LD	L,E
+	INC	DE
+	LD	BC,37-12-1
+	LD	(HL),B
+	LDIR
+
+	EXX
+	RLC	B
+	JR	NC,_MKNEW.L3
+
+	PUSH	DE
+	LD	C,0FH
+	CALL	DOSSYS
+	POP	DE
+	OR	A
+	JR	NZ,_MKNEW.L3
+
+	LD	HL,24
+	ADD	HL,DE
+	LD	A,(HL)
+	CP	0FDH
+	SBC	A,A
+	PUSH	AF
+	LD	C,10H
+	CALL	DOSSYS
+	POP	AF
+	AND	.FILEX
+	RET
+
+_MKNEW.L3:
+	PUSH	DE
+	LD	C,16H
+	CALL	DOSSYS
+	POP	DE
+	OR	A
+	RET	NZ
+
+	LD	C,10H
+	CALL	DOSSYS
+	OR	A
+	RET
+
+_MKNEW.H:
+	PUSH	IX
+	PUSH	DE
+	PUSH	DE
+	EXX
+	POP	IX
+	POP	DE
+	POP	HL
+	LD	BC,64
+	LDIR
+	EXX
+	EX	DE,HL
+	LD	HL,_MKNEW.H00
+	LD	C,42H
+	CALL	DOSSYS
+	OR	A
+	RET
+
+_MKNEW.H00:
+	DB	00H
+
+
+
+_GTSTR:
+	LD	A,(OSVER)
+	DEC	A
+	JR	NZ,_GTSTR.H
+
+_GTSTR.L:
+	EX	DE,HL
+	PUSH	HL
+	LD	A,(DE)
+	INC	DE
+	ADD	A,'A'-1
+	LD	(HL),A
+	INC	HL
+	LD	(HL),':'
+	INC	HL
+	LD	BC,800H+'.'
+	CALL	_GTSTR.L2
+	LD	A,B
+	ADD	A,E
+	LD	E,A
+	LD	BC,300H+00H
+	LD	A,D
+	ADC	A,C
+	LD	D,A
+	LD	A,(DE)
+	CP	20H
+	JR	Z,_GTSTR.L1
+
+	INC	HL
+
+_GTSTR.L1:
+	CALL	_GTSTR.L2
+	POP	HL
+	LD	D,H
+	LD	E,L
+	INC	HL
+	INC	HL
+	RET
+
+_GTSTR.L2:
+	LD	A,(DE)
+	LD	(HL),A
+	CP	20H
+	JR	Z,_GTSTR.L3
+	INC	HL
+	INC	DE
+	DJNZ	_GTSTR.L2
+
+_GTSTR.L3:
+	LD	(HL),C
+	RET
+
+_GTSTR.H:
+	LD	A,(HL)
+	INC	A
+	JR	NZ,_GTSTR.H1
+
+	PUSH	DE
+	PUSH	HL
+	LD	BC,25
+	ADD	HL,BC
+	LD	A,(HL)
+	ADD	A,'A'-1
+	LD	(DE),A
+	INC	DE
+	LD	A,':'
+	LD	(DE),A
+	INC	DE
+	LD	A,'\'
+	LD	(DE),A
+	INC	DE
+	LD	C,5EH
+	CALL	DOSSYS
+	LD	D,H
+	LD	E,L
+	EX	(SP),HL
+	INC	HL
+	CALL	LDIRWZ
+	POP	HL
+	POP	DE
+	RET
+
+_GTSTR.H1:
+	PUSH	DE
+	PUSH	HL
+	EX	DE,HL
+	INC	HL
+	LD	(HL),':'
+	INC	HL
+	LD	(HL),'\'
+	INC	HL
+	EX	DE,HL
+	LD	C,5EH
+	CALL	DOSSYS
+	EX	(SP),HL
+	EX	DE,HL
+	LD	BC,5BH
+	CALL	DOSSYS
+	POP	DE
+	PUSH	DE
+	CALL	LDIRWZ
+	POP	HL
+	POP	DE
+	LD	A,C
+	ADD	A,'A'-1
+	LD	(DE),A
+	RET
+
+
+
+_FCOMP:
+	LD	A,(OSVER)
+	DEC	A
+	JR	NZ,_FCOMP.H
+
+_FCOMP.L:
+	LD	H,B
+	LD	L,C
+	LD	B,1+11
+
+_FCOMP.L1:
+	LD	A,(DE)
+	SUB	(HL)
+	RET	NZ
+	INC	HL
+	INC	DE
+	DJNZ	_FCOMP.L1
+	CP	A
+	RET
+
+_FCOMP.H:
+	LD	C,4CH
+	CALL	DOSSYS
+	INC	B
+	RET
+
+
+;====================================
+_MAKE:	LD	A,(OSVER)
+	DEC	A
+	JR	NZ,_MAKE.H
+;------------------------------------
+_MAKE.L:
+	RLC	B
+	JR	NC,_MAKE.L1
+
+	PUSH	DE
+	LD	C,0FH
+	CALL	DOSSYS
+	POP	DE
+	OR	A
+	JR	NZ,_MAKE.L1
+	LD	C,10H
+	CALL	DOSSYS
+	LD	A,.FILEX
+	OR	A
+	RET
+_MAKE.L1:
+	PUSH	DE
+	LD	C,16H
+	CALL	DOSSYS
+	OR	A
+	POP	BC
+	RET	NZ
+	JR	_OPEN.L1
+;------------------------------------------
+_MAKE.H:XOR	A
+	LD	C,44H
+	CALL	DOSSYS
+	OR	A
+	RET
+;==========================================
+_OPEN:	LD	A,(OSVER)
+	DEC	A
+	JR	NZ,_OPEN.H
+;------------------------------------------
+_OPEN.L:
+	PUSH	DE
+	LD	C,0FH
+	CALL	DOSSYS
+	OR	A
+	POP	BC
+	RET	NZ
+_OPEN.L1:
+	LD	HL,+14
+	ADD	HL,BC
+	LD	(HL),01H
+	INC	HL
+	LD	(HL),A
+	LD	HL,+33
+	ADD	HL,BC
+	LD	(HL),A
+	INC	HL
+	LD	(HL),A
+	INC	HL
+	LD	(HL),A
+	INC	HL
+	LD	(HL),A
+	RET
+;
+_OPEN.H:XOR	A
+	LD	C,43H
+	CALL	DOSSYS
+	OR	A
+	RET
+;=========================================
+_SEEK:	EX	AF,AF'
+OSVER@:	LD	A,00H
+	DEC	A
+	JR	NZ,_SEEK.H
+;-----------------------------------------
+_SEEK.L:
+	PUSH	BC
+	POP	IX
+	EX	AF,AF'
+	OR	A
+	JR	Z,_SEEK.L0
+	DEC	A
+	JR	Z,_SEEK.L1
+_SEEK.L2:
+	LD	A,(IX+16)
+	ADD	A,L
+	LD	L,A
+	LD	A,(IX+17)
+	ADC	A,H
+	LD	H,A
+	LD	A,(IX+18)
+	ADC	A,E
+	LD	E,A
+	LD	A,(IX+19)
+	ADC	A,D
+	LD	D,A
+	JR	_SEEK.L0
+_SEEK.L1:
+	LD	A,(IX+33)
+	ADD	A,L
+	LD	L,A
+	LD	A,(IX+34)
+	ADC	A,H
+	LD	H,A
+	LD	A,(IX+35)
+	ADC	A,E
+	LD	E,A
+	LD	A,(IX+36)
+	ADC	A,D
+	LD	D,A
+_SEEK.L0:
+	LD	(IX+33),L
+	LD	(IX+34),H
+	LD	(IX+35),E
+	LD	(IX+36),D
+	RET
+;-----------------------------------------
+_SEEK.H:EX	AF,AF'
+	LD	C,4AH
+	JP	DOSSYS
+;=========================================
+_READ:	LD	A,(OSVER)
+	DEC	A
+	JR	NZ,_READ.H
+;-----------------------------------------
+_READ.L:PUSH	BC
+	PUSH	HL
+	LD	C,1AH
+	CALL	DOSSYS
+	POP	HL
+	POP	DE
+	LD	C,27H
+	CALL	DOSSYS
+	OR	A
+	RET	Z
+	LD	A,L
+	OR	H
+	JR	Z,_READ.L1
+	XOR	A
+	RET
+_READ.L1:
+	DEC	A
+	RET
+;-----------------------------------------
+_READ.H:LD	C,48H
+	CALL	DOSSYS
+	OR	A
+	RET
+;=========================================
+_WRITE:	LD	A,(OSVER)
+	DEC	A
+	JR	NZ,_WRITE.H
+;-----------------------------------------
+_WRITE.L:
+	PUSH	BC
+	PUSH	HL
+	LD	C,1AH
+	CALL	DOSSYS
+	POP	HL
+	POP	DE
+	LD	C,26H
+	CALL	DOSSYS
+	OR	A
+	RET
+;-----------------------------------------
+_WRITE.H:
+	LD	C,49H
+	CALL	DOSSYS
+	OR	A
+	RET
+;=========================================
+_FRUSH: LD	A,(OSVER)
+	DEC	A
+	JR	Z,_CLOSE.L
+;
+_FRUSH.H:
+	LD	C,46H
+	CALL	DOSSYS
+	OR	A
+	RET
+;=========================================
+_ATTRB:	LD	E,A
+	LD	A,(OSVER)
+	DEC	A
+	JR	NZ,_ATTRB.H
+;
+_ATTRB.L:
+	XOR	A
+	RET
+;
+_ATTRB.H:
+	LD	C,55H
+	LD	A,E
+	CALL	DOSSYS
+	OR	A
+	LD	A,L
+	RET
+;======================================
+_CLOSE:	LD	A,(OSVER)
+	DEC	A
+	JR	NZ,_CLOSE.H
+
+_CLOSE.L:
+	PUSH	BC
+	POP	DE
+	LD	C,10H
+	CALL	DOSSYS
+	OR	A
+	RET
+
+_CLOSE.H:
+	LD	C,45H
+	CALL	DOSSYS
+	OR	A
+	RET
+
+
+
+_STOUT:
+	LD	A,(OSVER)
+	DEC	A
+	JR	NZ,_STOUT.H
+
+_STOUT.L:
+	PUSH	DE
+	PUSH	HL
+	LD	DE,STDOUT
+	CALL	_OPEN.L
+	POP	HL
+	POP	DE
+	PUSH	BC
+	CALL	_WRITE.L
+	POP	BC
+	JP	_CLOSE.L
+
+_STOUT.H:
+	LD	B,1
+	JP	_WRITE.H
+
+
+
+_SCSIZ:
+	LD	A,(OSVER)
+	DEC	A
+	JR	NZ,_SCSIZ.H
+
+_SCSIZ.L:
+	LD	DE,(LINLEN)
+	XOR	A
+	RET
+
+_SCSIZ.H:
+	LD	BC,014BH
+	LD	A,04H
+	CALL	DOSSYS
+	OR	A
+	RET
+
+
+
+_FSDRV:
+	LD	A,(OSVER)
+	DEC	A
+	JR	NZ,_FSDRV.H
+
+_FSDRV.L:
+	LD	A,(DE)
+	DEC	A
+	LD	L,1
+	JR	_FSDRV.H2
+
+_FSDRV.H:
+	LD	A,(DE)
+	CP	0FFH
+	JR	Z,_FSDRV.H1
+
+	CALL	UPPERB
+	SUB	'A'
+	LD	L,2
+	JR	_FSDRV.H2
+
+_FSDRV.H1:
+	LD	HL,25
+	ADD	HL,DE
+	LD	A,(HL)
+	DEC	A
+	LD	L,1
+
+_FSDRV.H2:
+	AND	111B
+	LD	H,A
+	PUSH	HL
+	LD	H,0
+	ADD	HL,DE
+	LD	A,(HL)
+	CP	21H
+	POP	HL
+	LD	A,H
+	RET
+
+
+
+_GTCUR:
+	EX	DE,HL
+	LD	A,(CURDRV)
+	LD	B,A
+	ADD	A,'A'-1
+	LD	(HL),A
+	INC	HL
+	LD	(HL),':'
+	INC	HL
+	LD	A,(OSVER)
+	DEC	A
+	JR	NZ,_GTCUR.H
+
+_GTCUR.L:
+	XOR	A
+	LD	(HL),A
+	RET
+
+_GTCUR.H:
+	LD	(HL),'\'
+	INC	HL
+	PUSH	HL
+	EX	DE,HL
+	LD	C,59H
+	CALL	DOSSYS
+	POP	HL
+	XOR	A
+	CP	(HL)
+	RET	Z
+
+	LD	B,A
+	LD	C,A
+	CPIR
+	DEC	HL
+	LD	(HL),'\'
+	INC	HL
+	LD	(HL),A
+	XOR	A
+	RET
+;-------------------------------------------
+_CKEOF:	LD	A,(OSVER)
+	DEC	A
+	JR	NZ,_CKEOF.H
+;
+_CKEOF.L:
+	LD	HL,+33		;Current record
+	ADD	HL,BC
+	EX	DE,HL
+	LD	HL,+16		;File size
+	ADD	HL,BC
+	LD	B,4
+_CKEOF1:LD	A,(DE)
+	CP	(HL)
+	INC	HL
+	INC	DE
+	JR	NZ,_CKEOF2
+	DJNZ	_CKEOF1
+	LD	A,0FFH		;EOF=ON
+	RET
+_CKEOF2:XOR	A		;EOF=OFF
+	RET
+;
+_CKEOF.H:
+	XOR	A
+	LD	C,4BH
+	CALL	DOSSYS
+	OR	A
+	LD	A,0FFH
+	RET	NZ
+	LD	A,E
+	ADD	A,A
+	ADD	A,A
+	SBC	A,A
+	RET
+;---------------------------------------
+OSVER	EQU	OSVER@+1
+CURDRV	EQU	CURDRV@+1
+;
+	ENTRY	OSVER,CURDRV,.FILEX
+;***************************************
+	END
+
