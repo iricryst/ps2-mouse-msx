@@ -1,6 +1,6 @@
-# PS/2 IBM PC Mouse to MSX Mouse Converter
+# PS/2 PC Mouse to MSX Mouse Converter
 
-![PS/2 IBM PC Mouse to MSX Mouse Converter](ps2msxconverter.png)
+![PS/2 PC Mouse to MSX Mouse Converter](ps2msxconverter.png)
 
 KiCad schematic project for the 2009 Kami Karilov PS/2-to-MSX mouse converter reference design.
 
