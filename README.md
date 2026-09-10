@@ -8,7 +8,13 @@ Version 2.0
 
 Warning!!! This is still in concept stage. further testing is required. Not ready for production, please test (electrically) before plug in your MSX / Roland.
 
+BOM not available yet
 Required parts can be found in the schematic. To keep the pcb clean I removed nearly all markers, deignators and text. 
+Please note the pins on the mini-din connector. I removed pin 2 and 6 to make room for traces and let the Vcc plane intact.
+
+Also, the dsub 9 connector should be the female variant ofcourse. I used the male footprint+3Dmodel in Kicad.
+
+
 
 ## User manual
 
